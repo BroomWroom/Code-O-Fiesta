@@ -1,0 +1,14 @@
+import { NextRequest } from 'next/server';
+import { getLeaderboard } from '@/app/api/_services/leaderboard.service';
+import { successResponse, errorResponse } from '@/app/api/_lib/response';
+import { requireAdmin } from '@/app/api/_lib/authorization';
+
+export async function GET(req: NextRequest) {
+  try {
+    await requireAdmin(req);
+    const leaderboard = await getLeaderboard(true);
+    return successResponse(leaderboard);
+  } catch (error: any) {
+    return errorResponse(error.message, error.status || 500);
+  }
+}
