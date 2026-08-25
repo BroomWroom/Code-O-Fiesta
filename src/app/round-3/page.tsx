@@ -1,25 +1,41 @@
 'use client';
 
 import React from 'react';
-import ParticipantLayout from '@/components/layout/ParticipantLayout';
-import EventProgress from '@/components/event/EventProgress';
+import CodingIDE from '@/components/ide/CodingIDE';
+import { CodeConstraint } from '@/types/problem';
+
+const round3Constraints: CodeConstraint[] = [
+  {
+    id: 'ouroboros',
+    label: 'Ouroboros Bonus (+30 PTS)',
+    description: 'Solve using recursion without using any loops (for, while).',
+    type: 'no-loops',
+  },
+  {
+    id: 'shortAndSweet',
+    label: 'Short & Sweet Bonus (+20 PTS)',
+    description: 'Keep your code short and sweet under the character/line threshold.',
+    type: 'custom',
+  },
+  {
+    id: 'oneShotWonder',
+    label: 'One Shot Wonder Bonus (+40 PTS)',
+    description: 'Solve the problem correctly on your very first submission attempt.',
+    type: 'custom',
+  }
+];
 
 export default function Round3Page() {
   return (
-    <ParticipantLayout>
-      <div className="flex flex-col gap-6">
-        <EventProgress />
-
-        <div className="bg-[#0d0e24] border border-[#1e224d] rounded-xl p-6 shadow-sm">
-          <div className="text-[10px] font-mono text-purple-400 font-bold uppercase mb-1">
-            [ TANISH / ROUND 3 OWNER PLACEHOLDER ]
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Round 3: The Constraint Crucible</h2>
-          <p className="text-xs text-slate-300">
-            This page consumes <code className="font-mono text-cyan-400">ParticipantLayout</code>. Tanish will implement constraint cards, modifier calculators, and final round problems here.
-          </p>
-        </div>
-      </div>
-    </ParticipantLayout>
+    <CodingIDE
+      problemId="prob-crucible"
+      roundNumber={3}
+      mode="constraint"
+      roundConfig={{
+        mode: 'constraint',
+        activeConstraints: round3Constraints,
+      }}
+      onSolve={(subId) => console.log('Solved:', subId)}
+    />
   );
 }
