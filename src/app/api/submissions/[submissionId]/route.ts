@@ -5,7 +5,7 @@ import { getBatchSubmissions, Judge0Result } from '@/lib/judge0';
 import { SubmissionVerdict } from '@/constants/event';
 
 declare global {
-  var submissionCache: Map<string, { code: string; language: string; problemId: string; tokens?: string[] }> | undefined;
+  var submissionCache: Map<string, { code: string; language: string; problemId: string; tokens?: string[]; astResult?: any }> | undefined;
 }
 
 function mapJudge0StatusToIDEStatus(statusId: number): string {
@@ -146,6 +146,44 @@ export async function GET(
        await dbSubmission.save();
     }
 
+    // Process Constraints and Bonuses
+    const ast = isDb ? dbSubmission.astAnalysis : (globalThis.submissionCache?.get(submissionId) as any)?.astResult;
+    const constraintViolations: any[] = [];
+    let pointsEarned = status === 'accepted' ? 50 : 0;
+
+    if (status === 'accepted') {
+      // 1. Ouroboros (30 PTS)
+      if (ast) {
+        if (ast.loopsDetected || !ast.recursionDetected) {
+          constraintViolations.push({
+            constraintId: 'ouroboros',
+            message: ast.loopsDetected ? 'Loops detected' : 'No recursion detected'
+          });
+        } else {
+          pointsEarned += 30;
+        }
+
+        // 2. Short & Sweet (20 PTS) - assuming threshold is 50 lines
+        if (ast.lineCount > 50) {
+          constraintViolations.push({
+            constraintId: 'shortAndSweet',
+            message: `Code is ${ast.lineCount} lines (limit: 50)`
+          });
+        } else {
+          pointsEarned += 20;
+        }
+      } else {
+        constraintViolations.push({ constraintId: 'ouroboros', message: 'AST Analysis unavailable' });
+        constraintViolations.push({ constraintId: 'shortAndSweet', message: 'AST Analysis unavailable' });
+      }
+
+      // 3. One Shot Wonder (40 PTS)
+      const isOneShot = isDb ? (dbSubmission.submissionNumber <= 1) : true;
+      if (isOneShot) {
+        pointsEarned += 40;
+      }
+    }
+
     // Return final IDE result format
     return NextResponse.json({
       id: submissionId,
@@ -154,10 +192,10 @@ export async function GET(
       totalTests,
       timeMs: maxTimeMs,
       memoryKb: maxMemoryKb,
-      pointsEarned: status === 'accepted' ? 50 : 0,
+      pointsEarned,
       compilerError,
       failedTest,
-      constraintViolations: []
+      constraintViolations
     });
 
   } catch (err: any) {

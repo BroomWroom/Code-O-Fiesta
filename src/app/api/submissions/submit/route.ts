@@ -3,9 +3,10 @@ import connectDB from '@/lib/db';
 import Submission from '@/models/Submission';
 import Problem from '@/models/Problem';
 import { submitBatch, LANGUAGE_IDS, Judge0Submission } from '@/lib/judge0';
+import { analyzeSourceCode } from '../_services/ast.service';
 
 declare global {
-  var submissionCache: Map<string, { code: string; language: string; problemId: string; tokens?: string[] }> | undefined;
+  var submissionCache: Map<string, { code: string; language: string; problemId: string; tokens?: string[]; astResult?: any }> | undefined;
 }
 
 export async function POST(request: Request) {
@@ -53,27 +54,35 @@ export async function POST(request: Request) {
           }
         }
         
-        // Mock teamId, userId, roundId since auth is mock
-        const mongoose = require('mongoose');
-        const teamId = new mongoose.Types.ObjectId();
-        const userId = new mongoose.Types.ObjectId();
-        const roundId = new mongoose.Types.ObjectId();
-        
-        const count = await Submission.countDocuments({ problemId });
+// Mock teamId, userId, roundId since auth is mock
+const mongoose = require('mongoose');
+const teamId = new mongoose.Types.ObjectId();
+const userId = new mongoose.Types.ObjectId();
+const roundId = new mongoose.Types.ObjectId();
 
-        const sub = await Submission.create({
-          teamId,
-          userId,
-          roundId,
-          problemId: new mongoose.Types.ObjectId(problemId.length === 24 ? problemId : undefined),
-          sourceCode: code,
-          language,
-          submissionNumber: count + 1,
-          verdict: 'PENDING',
-          judge0: {
-            token: tokens.join(','),
-          },
-        });
+const count = await Submission.countDocuments({ problemId });
+
+let astResult = undefined;
+try {
+  astResult = await analyzeSourceCode(code, language);
+} catch (astErr) {
+  console.error('AST Analysis failed during submission:', astErr);
+}
+
+const sub = await Submission.create({
+  teamId,
+  userId,
+  roundId,
+  problemId: new mongoose.Types.ObjectId(problemId.length === 24 ? problemId : undefined),
+  sourceCode: code,
+  language,
+  submissionNumber: count + 1,
+  verdict: 'PENDING',
+  judge0: {
+    token: tokens.join(','),
+  },
+  ...(astResult && { astAnalysis: astResult }),
+});
 
         submissionId = sub._id.toString();
       } catch (dbErr) {
@@ -100,7 +109,7 @@ export async function POST(request: Request) {
     if (!globalThis.submissionCache) {
       globalThis.submissionCache = new Map();
     }
-    globalThis.submissionCache.set(submissionId, { code, language, problemId, tokens });
+    globalThis.submissionCache.set(submissionId, { code, language, problemId, tokens, astResult });
 
     return NextResponse.json({ submissionId });
   } catch (err: any) {
