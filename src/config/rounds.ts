@@ -19,6 +19,7 @@ export interface Round2Config {
 }
 
 export interface Round3Config {
+  durationMinutes: number;
   ideMode: 'constraint';
   scoring: {
     baseSolve: number;
@@ -37,7 +38,7 @@ export const ROUND_1_CONFIG: Round1Config = {
 };
 
 export const ROUND_2_CONFIG: Round2Config = {
-  durationMinutes: 120,
+  durationMinutes: 60,
   problemCount: 3,
   member1DurationMinutes: 15,
   member2DurationMinutes: 25,
@@ -49,6 +50,7 @@ export const ROUND_2_CONFIG: Round2Config = {
 };
 
 export const ROUND_3_CONFIG: Round3Config = {
+  durationMinutes: 60,
   ideMode: 'constraint',
   scoring: {
     baseSolve: 50,
