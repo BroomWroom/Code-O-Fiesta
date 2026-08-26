@@ -17,6 +17,7 @@ export function analyzeAST(
 
     if (isFunction) {
       funcName = adapter.getFunctionName(node);
+      console.log('Found function:', node.type, 'funcName:', funcName);
       if (funcName) {
         activeFunctions.push(funcName);
       }
@@ -28,6 +29,7 @@ export function analyzeAST(
 
     if (adapter.isFunctionCall(node.type)) {
       const callName = adapter.getFunctionName(node);
+      console.log('Found function call:', node.type, 'callName:', callName, 'activeFunctions:', activeFunctions);
       if (callName && activeFunctions.includes(callName)) {
         recursionDetected = true;
       }
