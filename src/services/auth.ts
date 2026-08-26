@@ -1,75 +1,117 @@
-import { apiCall } from '@/lib/api';
-import type { Team } from '@/types/team';
-
-export interface LoginCredentials {
-  teamName: string;
-  passcode: string;
-}
-
-export interface LoginResult {
-  success: boolean;
-  team?: Team;
-  error?: string;
-}
-
-function buildMockTeam(teamName: string): Team {
-  const name = teamName.trim() ? teamName.trim().toUpperCase() : 'CODEWARRIORS';
-  return {
-    id: name,
-    name,
-    status: 'ACTIVE',
-    score: 0,
-    members: [
-      { id: 'MEMBER_1', name: 'Member 1', isActive: true, isConnected: true },
-      { id: 'MEMBER_2', name: 'Member 2', isActive: false, isConnected: true },
-    ],
-  };
-}
-
-// Backend auth isn't wired up yet — used only when /api/auth/login is unreachable,
-// so the wrong-credentials flow has something real to test against.
-const DEMO_TEAM_NAME = 'CODEWARRIORS';
-const DEMO_PASSCODE = '1234';
+import { UserRole } from '@/constants/event';
 
 export const authService = {
-  async login(credentials: LoginCredentials): Promise<LoginResult> {
-    try {
-      const data = await apiCall('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      });
-      if (data?.team) return { success: true, team: data.team as Team };
-      throw new Error('Empty login response');
-    } catch {
-      const nameMatches = credentials.teamName.trim().toUpperCase() === DEMO_TEAM_NAME;
-      const passcodeMatches = credentials.passcode.trim() === DEMO_PASSCODE;
+  login: async (credentials: { teamName?: string; passcode?: string; email?: string; password?: string }) => {
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-      if (nameMatches && passcodeMatches) {
-        return { success: true, team: buildMockTeam(credentials.teamName) };
+    // Admin Login Verification
+    if (credentials.email && credentials.password) {
+      if (
+        credentials.email.trim().toLowerCase() === 'admin@codechefvit.com' &&
+        credentials.password === 'admin123'
+      ) {
+        const adminSession = {
+          role: UserRole.ADMIN,
+          user: {
+            id: 'admin_user',
+            name: 'Event Organizer',
+            email: 'admin@codechefvit.com',
+          },
+        };
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem('cof_session', JSON.stringify(adminSession));
+        }
+        return { success: true, role: UserRole.ADMIN };
+      }
+      return { error: 'Invalid admin email or password.' };
+    }
+
+    // Team Login Verification
+    if (credentials.teamName && credentials.passcode) {
+      const name = credentials.teamName.trim().toUpperCase();
+      const code = credentials.passcode.trim();
+
+      // Mock list of valid teams and codes
+      const validTeams = [
+        { name: 'TEAM_014', code: '1111', score: 120 },
+        { name: 'CODEWARRIORS', code: '1234', score: 520 },
+        { name: 'BYTEFORCE', code: '5678', score: 490 },
+        { name: 'DEBUGGERS', code: '9012', score: 470 },
+        { name: 'ALGORITHMIC_ALCHEMISTS', code: '9999', score: 80 },
+      ];
+
+      const matchedTeam = validTeams.find((t) => t.name === name);
+
+      if (!matchedTeam || matchedTeam.code !== code) {
+        return { error: 'Invalid team name or passcode.' };
       }
 
-      return {
-        success: false,
-        error: 'Invalid Team Name or Passcode. Please check your credentials and try again.',
+      const teamSession = {
+        role: UserRole.PARTICIPANT,
+        team: {
+          id: `team_${name.toLowerCase()}`,
+          name: matchedTeam.name,
+          score: matchedTeam.score,
+        },
       };
+
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('cof_session', JSON.stringify(teamSession));
+      }
+      return { success: true, role: UserRole.PARTICIPANT };
     }
+
+    return { error: 'Missing credentials.' };
   },
 
-  async logout(): Promise<void> {
-    try {
-      await apiCall('/api/auth/logout', { method: 'POST' });
-    } catch {
-      // No-op — nothing to clean up against a stub backend.
+  logout: async () => {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('cof_session');
     }
+    return { success: true };
   },
 
-  async me(): Promise<Team | null> {
+  getMe: async () => {
+    if (typeof window === 'undefined') {
+      return { authenticated: false };
+    }
+
+    const sessionStr = window.sessionStorage.getItem('cof_session');
+    if (!sessionStr) {
+      return { authenticated: false };
+    }
+
     try {
-      const data = await apiCall('/api/auth/me');
-      return (data?.team as Team) ?? null;
+      const session = JSON.parse(sessionStr);
+
+      if (session.role === UserRole.ADMIN) {
+        return {
+          authenticated: true,
+          role: UserRole.ADMIN,
+          user: session.user,
+        };
+      }
+
+      // Populate mock team details based on name
+      const name = session.team.name;
+      return {
+        authenticated: true,
+        role: UserRole.PARTICIPANT,
+        team: {
+          id: session.team.id,
+          name: name,
+          status: name === 'ALGORITHMIC_ALCHEMISTS' ? 'DISQUALIFIED' : 'ACTIVE',
+          teamCode: name === 'TEAM_014' ? '1111' : '1234',
+          members: [
+            { id: `${name}_m1`, name: `${name} Captain`, email: `${name.toLowerCase()}1@gmail.com`, role: 'PARTICIPANT', teamMember: 'MEMBER_1' },
+            { id: `${name}_m2`, name: `${name} Member`, email: `${name.toLowerCase()}2@gmail.com`, role: 'PARTICIPANT', teamMember: 'MEMBER_2' },
+          ],
+          captainId: `${name}_m1`,
+        },
+      };
     } catch {
-      return null;
+      return { authenticated: false };
     }
   },
 };
