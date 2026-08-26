@@ -9,11 +9,16 @@ export default function ForcedSwitchOverlay({ onDismiss, targetMember = 'Member 
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
+    if (countdown === 0) {
+      onDismiss();
+    }
+  }, [countdown, onDismiss]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          onDismiss();
           return 0;
         }
         return prev - 1;
@@ -21,7 +26,7 @@ export default function ForcedSwitchOverlay({ onDismiss, targetMember = 'Member 
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [onDismiss]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#060612]/95 backdrop-blur-md flex flex-col items-center justify-center text-center p-4">

@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Submission from '@/models/Submission';
 
+declare global {
+  var submissionCache: Map<string, { code: string; language: string; problemId: string }> | undefined;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -37,6 +41,12 @@ export async function POST(request: Request) {
         console.error('Failed to save submission to DB, returning mock ID:', dbErr);
       }
     }
+
+    // Cache the submission code and metadata for dynamic judging during polling
+    if (!globalThis.submissionCache) {
+      globalThis.submissionCache = new Map();
+    }
+    globalThis.submissionCache.set(submissionId, { code, language, problemId });
 
     return NextResponse.json({ submissionId });
   } catch (err: any) {

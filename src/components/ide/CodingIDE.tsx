@@ -101,6 +101,7 @@ export default function CodingIDE({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fontSize, setFontSize] = useState(14);
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
+  const [isConsoleExpanded, setIsConsoleExpanded] = useState(false);
 
   // Relay Turn timer countdown (10 minutes default / from roundConfig)
   const [timeLeft, setTimeLeft] = useState<number>(0);
@@ -153,6 +154,7 @@ export default function CodingIDE({
   useEffect(() => {
     if (runResult) {
       setConsoleTab('output');
+      setIsConsoleExpanded(true);
     }
   }, [runResult]);
 
@@ -160,8 +162,15 @@ export default function CodingIDE({
     if (submitResult) {
       setConsoleTab('verdict');
       setShowFullVerdict(true);
+      setIsConsoleExpanded(true);
     }
   }, [submitResult]);
+
+  useEffect(() => {
+    if (isRunning || isSubmitting) {
+      setIsConsoleExpanded(true);
+    }
+  }, [isRunning, isSubmitting]);
 
   // Error logging prop trigger
   useEffect(() => {
@@ -236,7 +245,7 @@ export default function CodingIDE({
       )}
 
       {/* Main Page Layout Wrapper */}
-      <div className={`flex flex-col h-[calc(100vh-140px)] lg:h-[calc(100vh-140px)] bg-[#0a0a1a] select-none text-white ${isFullscreen ? 'fixed inset-0 z-50 h-screen' : ''}`}>
+      <div className={`flex flex-col h-screen lg:h-screen bg-[#0a0a1a] select-none text-white ${isFullscreen ? 'fixed inset-0 z-50 h-screen' : ''}`}>
         
         {/* Relay Round Info Header */}
         {mode === 'relay' && roundConfig && (
@@ -332,58 +341,71 @@ export default function CodingIDE({
             </div>
 
             {/* Bottom Console Panel */}
-            <div className="flex-shrink-0">
-              <ConsolePanel
-                activeTab={consoleTab}
-                onTabChange={setConsoleTab}
-                customInputChild={
-                  <CustomInput
-                    value={customInput}
-                    onChange={setCustomInput}
-                    exampleInput={examples[0]?.input || ''}
-                  />
-                }
-                outputChild={
-                  <OutputPanel runResult={runResult} isRunning={isRunning} />
-                }
-                verdictChild={
-                  showFullVerdict ? (
-                    <div className="flex flex-col h-full">
-                      <div className="flex justify-between items-center mb-2 px-1">
-                        <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Verdict Details</span>
-                        <button
-                          onClick={() => setShowFullVerdict(false)}
-                          type="button"
-                          className="text-[10px] font-mono text-purple-400 hover:text-purple-300 underline cursor-pointer"
-                        >
-                          Back to Summary
-                        </button>
-                      </div>
-                      <div className="flex-grow overflow-auto">
-                        <VerdictPanel 
-                          submitResult={submitResult} 
-                          submissionCount={submissionHistory.length} 
-                          mode={mode} 
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <SubmissionResult
-                      submitResult={submitResult}
-                      isSubmitting={isSubmitting}
-                      onViewFullVerdict={() => setShowFullVerdict(true)}
-                      mode={mode}
-                      submissionCount={submissionHistory.length}
+            {isConsoleExpanded && (
+              <div className="flex-shrink-0">
+                <ConsolePanel
+                  activeTab={consoleTab}
+                  onTabChange={setConsoleTab}
+                  customInputChild={
+                    <CustomInput
+                      value={customInput}
+                      onChange={setCustomInput}
+                      exampleInput={examples[0]?.input || ''}
                     />
-                  )
-                }
-              />
-            </div>
+                  }
+                  outputChild={
+                    <OutputPanel runResult={runResult} isRunning={isRunning} />
+                  }
+                  verdictChild={
+                    showFullVerdict ? (
+                      <div className="flex flex-col h-full">
+                        <div className="flex justify-between items-center mb-2 px-1">
+                          <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Verdict Details</span>
+                          <button
+                            onClick={() => setShowFullVerdict(false)}
+                            type="button"
+                            className="text-[10px] font-mono text-purple-400 hover:text-purple-300 underline cursor-pointer"
+                          >
+                            Back to Summary
+                          </button>
+                        </div>
+                        <div className="flex-grow overflow-auto">
+                          <VerdictPanel 
+                            submitResult={submitResult} 
+                            submissionCount={submissionHistory.length} 
+                            mode={mode} 
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <SubmissionResult
+                        submitResult={submitResult}
+                        isSubmitting={isSubmitting}
+                        onViewFullVerdict={() => setShowFullVerdict(true)}
+                        mode={mode}
+                        submissionCount={submissionHistory.length}
+                      />
+                    )
+                  }
+                />
+              </div>
+            )}
 
             {/* Bottom Action buttons bar (Run / Submit) */}
-            <div className="flex items-center justify-end gap-3 px-4 py-3 bg-[#080814] border-t border-[var(--border)] select-none">
+            <div className="flex items-center justify-between gap-3 px-4 py-3 bg-[#080814] border-t border-[var(--border)] select-none flex-shrink-0">
+              <button
+                onClick={() => setIsConsoleExpanded(!isConsoleExpanded)}
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#1e1e3a] bg-[#0c0d21] text-xs font-mono font-bold text-slate-300 hover:text-white hover:bg-purple-600/10 hover:border-purple-500/30 transition-all cursor-pointer select-none"
+              >
+                <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${isConsoleExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+                Console
+              </button>
+
               {mode === 'relay' && (
-                <div className="mr-auto">
+                <div className="mx-auto">
                   <RelayStatus 
                     activeTeamMember={roundConfig?.activeTeamMember || 'member1'} 
                     timeLeftSeconds={timeLeft} 
@@ -391,7 +413,7 @@ export default function CodingIDE({
                 </div>
               )}
               {mode === 'constraint' && (
-                <div className="mr-auto w-full max-w-lg hidden md:block">
+                <div className="mx-auto w-full max-w-md hidden md:block">
                   <ConstraintPanel
                     isSolved={isSolved}
                     submitResult={submitResult}
@@ -400,17 +422,19 @@ export default function CodingIDE({
                 </div>
               )}
 
-              <RunButton 
-                onClick={run} 
-                disabled={isRunning || isSubmitting} 
-                isRunning={isRunning} 
-              />
-              <SubmitButton
-                onClick={() => submit(onSolve)}
-                disabled={isRunning || isSubmitting || isLocked}
-                isSubmitting={isSubmitting}
-                isLocked={isLocked}
-              />
+              <div className="flex items-center gap-3 ml-auto">
+                <RunButton 
+                  onClick={run} 
+                  disabled={isRunning || isSubmitting} 
+                  isRunning={isRunning} 
+                />
+                <SubmitButton
+                  onClick={() => submit(onSolve)}
+                  disabled={isRunning || isSubmitting || isLocked}
+                  isSubmitting={isSubmitting}
+                  isLocked={isLocked}
+                />
+              </div>
             </div>
           </div>
         </div>
