@@ -1,9 +1,33 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Submission from '@/models/Submission';
+import { getBatchSubmissions, Judge0Result } from '@/lib/judge0';
+import { SubmissionVerdict } from '@/constants/event';
 
 declare global {
-  var submissionCache: Map<string, { code: string; language: string; problemId: string }> | undefined;
+  var submissionCache: Map<string, { code: string; language: string; problemId: string; tokens?: string[] }> | undefined;
+}
+
+function mapJudge0StatusToIDEStatus(statusId: number): string {
+  if (statusId <= 2) return 'processing';
+  if (statusId === 3) return 'accepted';
+  if (statusId === 4) return 'wrong_answer';
+  if (statusId === 5) return 'time_limit_exceeded';
+  if (statusId === 6) return 'compilation_error';
+  if (statusId >= 7 && statusId <= 12) return 'runtime_error';
+  return 'wrong_answer';
+}
+
+function mapToVerdictEnum(status: string): SubmissionVerdict {
+  switch (status) {
+    case 'accepted': return SubmissionVerdict.ACCEPTED;
+    case 'wrong_answer': return SubmissionVerdict.WRONG_ANSWER;
+    case 'time_limit_exceeded': return SubmissionVerdict.TIME_LIMIT_EXCEEDED;
+    case 'memory_limit_exceeded': return SubmissionVerdict.MEMORY_LIMIT_EXCEEDED;
+    case 'compilation_error': return SubmissionVerdict.COMPILATION_ERROR;
+    case 'runtime_error': return SubmissionVerdict.RUNTIME_ERROR;
+    default: return SubmissionVerdict.PENDING;
+  }
 }
 
 export async function GET(
@@ -13,20 +37,19 @@ export async function GET(
   try {
     const { submissionId } = await params;
     
-    let code = '';
-    let language = 'cpp';
-    let problemId = '';
+    let tokens: string[] = [];
+    let dbSubmission: any = null;
+    let isDb = false;
 
-    // 1. Attempt to fetch from Database
+    // 1. Fetch from Database
     if (process.env.MONGODB_URI) {
       try {
         await connectDB();
         if (submissionId.length === 24) {
-          const sub = await Submission.findById(submissionId);
-          if (sub) {
-            code = sub.sourceCode || '';
-            language = sub.language || 'cpp';
-            problemId = sub.problemId?.toString() || '';
+          dbSubmission = await Submission.findById(submissionId);
+          if (dbSubmission && dbSubmission.judge0 && dbSubmission.judge0.token) {
+            tokens = dbSubmission.judge0.token.split(',');
+            isDb = true;
           }
         }
       } catch (dbErr) {
@@ -35,196 +58,110 @@ export async function GET(
     }
 
     // 2. Fallback to memory cache
-    if (!code && globalThis.submissionCache) {
+    if (tokens.length === 0 && globalThis.submissionCache) {
       const cached = globalThis.submissionCache.get(submissionId);
-      if (cached) {
-        code = cached.code;
-        language = cached.language;
-        problemId = cached.problemId;
+      if (cached && cached.tokens) {
+        tokens = cached.tokens;
       }
     }
 
-    // Default mock code if absolutely nothing was found
-    if (!code) {
-      code = '# write your code here\nprint("localization")';
+    if (tokens.length === 0) {
+      return NextResponse.json({ error: 'Submission not found or has no tokens' }, { status: 404 });
     }
 
-    const normalized = code.replace(/\/\*[\s\S]*?\*\/|\/\/.*|#.*/g, ''); // strip comments
+    // Check if the submission is already fully processed in DB (optional optimization)
+    if (isDb && dbSubmission.verdict && dbSubmission.verdict !== SubmissionVerdict.PENDING) {
+       // It's already graded, but we need to return in IDE format
+       // For this simple implementation, we can just re-fetch from Judge0 or 
+       // construct the response from DB.
+       // Let's just always poll Judge0 for now to guarantee full data.
+    }
 
-    // --- STATIC GRADINGS ---
-    let status: string = 'accepted';
-    let testsPassed = 5;
-    let totalTests = 5;
-    let timeMs = 72;
-    let memoryKb = 3420;
-    let compilerError = '';
+    // Fetch batch submissions from Judge0
+    const { submissions } = await getBatchSubmissions(tokens);
+
+    let status = 'accepted';
+    let testsPassed = 0;
+    const totalTests = submissions.length;
+    let maxTimeMs = 0;
+    let maxMemoryKb = 0;
+    let compilerError: string | undefined = undefined;
     let failedTest: any = null;
 
-    // A. Braces Balance Check
-    const openBraces = (code.match(/\{/g) || []).length;
-    const closeBraces = (code.match(/\}/g) || []).length;
-    if (openBraces !== closeBraces) {
-      status = 'compilation_error';
-      testsPassed = 0;
-      compilerError = `error: reached end of file while parsing (unmatched braces: { is ${openBraces}, } is ${closeBraces})\nUnclosed braces found in code structure.`;
-    }
-    // B. Parentheses Balance Check
-    else if ((code.match(/\(/g) || []).length !== (code.match(/\)/g) || []).length) {
-      status = 'compilation_error';
-      testsPassed = 0;
-      compilerError = `error: expected ')' - unmatched parenthesis\nSyntax error: check balance of '(' and ')'`;
-    }
-    // C. Java public class Main requirements
-    else if (language === 'java' && code.includes('public class') && !code.includes('public class Main')) {
-      const match = code.match(/public class\s+(\w+)/);
-      const className = match ? match[1] : 'Unknown';
-      status = 'compilation_error';
-      testsPassed = 0;
-      compilerError = `error: class ${className} is public, should be declared in a file named Main.java (please rename class to 'Main')`;
-    }
-    // D. Semicolon Checks for C++/Java/JavaScript
-    else {
-      let semicolonError = false;
-      if (language === 'cpp' || language === 'java' || language === 'javascript') {
-        const lines = code.split('\n');
-        for (let i = 0; i < lines.length; i++) {
-          const trimmed = lines[i].trim();
-          
-          const isStatement = trimmed.includes('=') || trimmed.includes('print') || trimmed.includes('cout') || trimmed.includes('return') || trimmed.includes('log(');
-          const isControl = trimmed.startsWith('if') || trimmed.startsWith('for') || trimmed.startsWith('while') || trimmed.startsWith('class') || trimmed.startsWith('public') || trimmed.startsWith('import') || trimmed.startsWith('#include') || trimmed.startsWith('using') || trimmed.endsWith('{') || trimmed.endsWith('}') || trimmed === '';
-          
-          if (isStatement && !isControl && !trimmed.endsWith(';')) {
-            status = 'compilation_error';
-            testsPassed = 0;
-            compilerError = `Compilation failed at line ${i + 1}:\n    ${lines[i].trim()}\n` + ' '.repeat(lines[i].trim().length) + '^ expected Semicolon (;)';
-            semicolonError = true;
-            break;
-          }
-        }
-      }
+    const decodeBase64 = (str: string | null) => str ? Buffer.from(str, 'base64').toString('utf-8') : '';
 
-      if (!semicolonError) {
-        // E. Python indentation / syntax
-        if (language === 'python') {
-          const lines = code.split('\n');
-          for (let i = 0; i < lines.length; i++) {
-            const trimmed = lines[i].trim();
-            if (trimmed.startsWith('def ') && !trimmed.endsWith(':')) {
-              status = 'compilation_error';
-              testsPassed = 0;
-              compilerError = `SyntaxError: expected ':' on line ${i + 1}\n    ${lines[i].trim()}`;
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    // F. Division by zero (Runtime Error)
-    if (status === 'accepted' && /\/\s*0(?!\\d)/.test(normalized)) {
-      status = 'runtime_error';
-      testsPassed = 1;
-      compilerError = language === 'java'
-        ? 'Exception in thread "main" java.lang.ArithmeticException: / by zero\n\tat Main.main(Main.java:5)'
-        : 'Runtime Error: Division by zero (SIGFPE)';
-      timeMs = 6;
-    }
-    // G. ArrayIndexOutOfBoundsException (Runtime Error)
-    else if (status === 'accepted' && (normalized.includes('IndexOutOfBounds') || normalized.includes('ArrayIndexOutOfBounds') || normalized.includes('out_of_range'))) {
-      status = 'runtime_error';
-      testsPassed = 2;
-      compilerError = 'IndexOutOfBoundException: Index 10 out of bounds for length 5\n\tat Main.main(Main.java:6)';
-      timeMs = 12;
-    }
-    // H. Infinite loops (Time Limit Exceeded)
-    else if (status === 'accepted' && (normalized.includes('while(true)') || normalized.includes('while (true)') || normalized.includes('for(;;)') || normalized.includes('for (;;)') || normalized.includes('infinite_loop'))) {
-      status = 'time_limit_exceeded';
-      testsPassed = 3;
-      timeMs = 1000;
-    }
-    // I. Array size limit (Memory Limit Exceeded)
-    else if (status === 'accepted' && (normalized.includes('100000000') || normalized.includes('new int[999999]') || normalized.includes('new int[10000000]'))) {
-      status = 'memory_limit_exceeded';
-      testsPassed = 4;
-      memoryKb = 524288;
-    }
-    // J. Wrong Answer Check (Logic verification)
-    else if (status === 'accepted') {
-      const hasLengthLogic = normalized.includes('length') || normalized.includes('len(') || normalized.includes('size()');
+    for (let i = 0; i < submissions.length; i++) {
+      const sub = submissions[i];
+      const subStatus = mapJudge0StatusToIDEStatus(sub.status.id);
       
-      const printMatches: string[] = [];
-      const jsRegex = /console\.log\(\s*["']([^"']*)["']\s*\)/g;
-      const pyRegex = /print\(\s*["']([^"']*)["']\s*\)/g;
-      const javaRegex = /System\.out\.print(?:ln)?\(\s*["']([^"']*)["']\s*\)/g;
-      const cppRegex = /cout\s*<<\s*["']([^"']*)["']/g;
+      const timeMs = parseFloat(sub.time || '0') * 1000;
+      const memKb = sub.memory || 0;
+      if (timeMs > maxTimeMs) maxTimeMs = timeMs;
+      if (memKb > maxMemoryKb) maxMemoryKb = memKb;
 
-      let match;
-      while ((match = jsRegex.exec(code)) !== null) printMatches.push(match[1]);
-      while ((match = pyRegex.exec(code)) !== null) printMatches.push(match[1]);
-      while ((match = javaRegex.exec(code)) !== null) printMatches.push(match[1]);
-      while ((match = cppRegex.exec(code)) !== null) printMatches.push(match[1]);
+      if (subStatus === 'processing') {
+        return NextResponse.json({
+          id: submissionId,
+          status: 'processing',
+          testsPassed: 0,
+          totalTests: 0,
+          timeMs: 0,
+          memoryKb: 0,
+          pointsEarned: 0,
+          constraintViolations: [],
+        });
+      }
 
-      if (printMatches.length > 0) {
-        const stdout = printMatches.join('\n');
-        const expectedOutput = hasLengthLogic ? 'word\nl10n\ni18n\np43s' : 'word\nlocalization\ninternationalization\npneumonoultramicroscopicsilicovolcanoconiosis';
-        const matchesExpected = stdout.trim() === expectedOutput;
-
-        if (!matchesExpected) {
-          status = 'wrong_answer';
-          testsPassed = 1;
+      if (subStatus === 'accepted') {
+        testsPassed++;
+      } else if (status === 'accepted') {
+        // First failure encountered
+        status = subStatus;
+        if (subStatus === 'compilation_error') {
+          compilerError = decodeBase64(sub.compile_output || sub.stderr || sub.message) || 'Compilation Error';
+        } else if (subStatus === 'runtime_error') {
+          compilerError = decodeBase64(sub.stderr || sub.message) || 'Runtime Error';
+        } else if (subStatus === 'wrong_answer') {
           failedTest = {
-            index: 2,
-            input: 'localization',
-            expected: 'l10n',
-            actual: stdout.split('\n')[1] || stdout || '(empty)'
+             index: i + 1,
+             input: 'Hidden Test Case', // We don't echo back hidden test cases
+             expected: 'Expected Output',
+             actual: decodeBase64(sub.stdout) || '(empty)'
           };
         }
-      } else if (!hasLengthLogic) {
-        status = 'wrong_answer';
-        testsPassed = 1;
-        failedTest = {
-          index: 2,
-          input: 'localization',
-          expected: 'l10n',
-          actual: 'localization'
-        };
       }
     }
 
-    // K. Round 3 active constraint violation scans
-    const violations: any[] = [];
-    if (code.includes('for') || code.includes('while')) {
-      const lineIndex = code.split('\n').findIndex(l => l.includes('for') || l.includes('while')) + 1;
-      violations.push({
-        constraintId: 'ouroboros',
-        line: lineIndex > 0 ? lineIndex : 3,
-        column: 5,
-        message: 'Loops detected (for/while) in Ouroboros recursion-only mode.'
-      });
+    // If we've finished processing, update DB
+    if (isDb && dbSubmission && dbSubmission.verdict === SubmissionVerdict.PENDING) {
+       dbSubmission.verdict = mapToVerdictEnum(status);
+       dbSubmission.judge0 = {
+         ...dbSubmission.judge0,
+         statusId: submissions[0].status.id,
+         status: status,
+         executionTime: maxTimeMs,
+         memory: maxMemoryKb,
+         compileOutput: compilerError
+       };
+       await dbSubmission.save();
     }
 
-    if (code.split('\n').length > 30) {
-      violations.push({
-        constraintId: 'shortAndSweet',
-        line: 31,
-        column: 1,
-        message: 'Source code exceeds standard 30 lines limit constraint.'
-      });
-    }
-
+    // Return final IDE result format
     return NextResponse.json({
       id: submissionId,
       status,
       testsPassed,
       totalTests,
-      timeMs,
-      memoryKb,
+      timeMs: maxTimeMs,
+      memoryKb: maxMemoryKb,
       pointsEarned: status === 'accepted' ? 50 : 0,
-      compilerError: status === 'compilation_error' || status === 'runtime_error' ? compilerError : undefined,
-      failedTest: status === 'wrong_answer' ? failedTest : undefined,
-      constraintViolations: violations
+      compilerError,
+      failedTest,
+      constraintViolations: []
     });
+
   } catch (err: any) {
+    console.error('Judge0 polling error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -354,7 +354,7 @@ export default function CodingIDE({
                     />
                   }
                   outputChild={
-                    <OutputPanel runResult={runResult} isRunning={isRunning} />
+                    <OutputPanel runResult={runResult} isRunning={isRunning} errorMsg={errorMsg} />
                   }
                   verdictChild={
                     showFullVerdict ? (

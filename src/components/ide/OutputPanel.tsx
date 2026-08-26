@@ -6,9 +6,10 @@ import { RunResult } from '@/types/submission';
 interface OutputPanelProps {
   runResult: RunResult | null;
   isRunning: boolean;
+  errorMsg?: string | null;
 }
 
-export default function OutputPanel({ runResult, isRunning }: OutputPanelProps) {
+export default function OutputPanel({ runResult, isRunning, errorMsg }: OutputPanelProps) {
   if (isRunning) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[120px] text-[var(--text-secondary)] font-mono text-xs gap-3">
@@ -17,6 +18,17 @@ export default function OutputPanel({ runResult, isRunning }: OutputPanelProps) 
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
         <span>Running your code...</span>
+      </div>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="flex flex-col h-full gap-3 font-mono text-xs">
+        <div className="flex items-center gap-3 px-3 py-2 rounded bg-red-950/20 border border-red-500/20">
+          <span className="text-[10px] text-red-400 uppercase font-bold">Execution Error:</span>
+          <span className="text-red-300">{errorMsg}</span>
+        </div>
       </div>
     );
   }
