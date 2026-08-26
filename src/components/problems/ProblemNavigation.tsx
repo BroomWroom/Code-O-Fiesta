@@ -20,8 +20,11 @@ export default function ProblemNavigation({
   totalProblems = 3,
   onNavigate,
 }: ProblemNavigationProps) {
-  // Only shown when roundNumber === 1
-  if (roundNumber !== 1) return null;
+  // Only hidden for Round 2 (Relay mode)
+  if (roundNumber === 2) return null;
+
+  const dashboardHref = roundNumber === 3 ? '/round-3' : '/round-1/maze';
+  const dashboardLabel = roundNumber === 3 ? 'All Problems (Round 3 Dashboard)' : 'All Problems (Maze Dashboard)';
 
   return (
     <div className="flex flex-col gap-3 px-4 py-3 border-t border-[var(--border)] bg-[#080814] select-none font-mono">
@@ -73,10 +76,10 @@ export default function ProblemNavigation({
       {/* Back link */}
       <div className="flex justify-center mt-1">
         <Link
-          href="/round-1/maze"
+          href={dashboardHref}
           className="text-[10px] font-bold text-[var(--text-secondary)] hover:text-purple-400 uppercase tracking-wider underline transition-colors"
         >
-          All Problems (Maze Dashboard)
+          {dashboardLabel}
         </Link>
       </div>
     </div>
