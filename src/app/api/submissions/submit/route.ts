@@ -3,7 +3,7 @@ import connectDB from '@/lib/db';
 import Submission from '@/models/Submission';
 import Problem from '@/models/Problem';
 import { submitBatch, LANGUAGE_IDS, Judge0Submission } from '@/lib/judge0';
-import { analyzeSourceCode } from '../_services/ast.service';
+import { analyzeSourceCode } from '../../_services/ast.service';
 
 declare global {
   var submissionCache: Map<string, { code: string; language: string; problemId: string; tokens?: string[]; astResult?: any }> | undefined;
@@ -22,6 +22,13 @@ export async function POST(request: Request) {
     let submissionId = `sub_${Date.now()}`;
     let tokens: string[] = [];
     let problemDetails: any = null;
+
+    let astResult: any = undefined;
+    try {
+      astResult = await analyzeSourceCode(code, language);
+    } catch (astErr) {
+      console.error('AST Analysis failed during submission:', astErr);
+    }
 
     if (process.env.MONGODB_URI) {
       try {
@@ -62,13 +69,6 @@ const roundId = new mongoose.Types.ObjectId();
 
 const count = await Submission.countDocuments({ problemId });
 
-let astResult = undefined;
-try {
-  astResult = await analyzeSourceCode(code, language);
-} catch (astErr) {
-  console.error('AST Analysis failed during submission:', astErr);
-}
-
 const sub = await Submission.create({
   teamId,
   userId,
@@ -93,7 +93,7 @@ const sub = await Submission.create({
     // Fallback if DB failed or isn't configured, submit just example test case if we don't have problem details
     if (tokens.length === 0) {
        // A mock problem's test cases
-       const mockInputs = ['word\nlocalization\ninternationalization\npneumonoultramicroscopicsilicovolcanoconiosis'];
+       const mockInputs = ['4\nword\nlocalization\ninternationalization\npneumonoultramicroscopicsilicovolcanoconiosis'];
        const mockOutputs = ['word\nl10n\ni18n\np43s'];
        const submissions = mockInputs.map((input, idx) => ({
          source_code: code,
