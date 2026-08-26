@@ -271,8 +271,8 @@ export default function CodingIDE({
               prevProblemId={prevProblemId}
               nextProblemId={nextProblemId}
               onNavigate={(id) => {
-                // Navigate to next/prev problem using Next.js path or routing trigger
-                window.location.href = `/round-1/problem/${id}`;
+                // Navigate to next/prev problem using dynamic round path
+                window.location.href = `/round-${roundNumber}/problem/${id}`;
               }}
               onUseAsInput={(text) => {
                 setCustomInput(text);
@@ -409,15 +409,6 @@ export default function CodingIDE({
                   <RelayStatus 
                     activeTeamMember={roundConfig?.activeTeamMember || 'member1'} 
                     timeLeftSeconds={timeLeft} 
-                  />
-                </div>
-              )}
-              {mode === 'constraint' && (
-                <div className="mx-auto w-full max-w-md hidden md:block">
-                  <ConstraintPanel
-                    isSolved={isSolved}
-                    submitResult={submitResult}
-                    submissionCount={submissionHistory.length}
                   />
                 </div>
               )}
