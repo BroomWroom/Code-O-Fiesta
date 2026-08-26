@@ -33,7 +33,8 @@ export default function ProblemPanel({
 }: ProblemPanelProps) {
   const [activeTab, setActiveTab] = useState<'statement' | 'examples' | 'constraints' | 'submissions'>('statement');
 
-  const { title, difficulty, points, statement, examples, constraints, timeLimit, memoryLimit, roundNumber } = problem;
+  const { title, difficulty, points, statement, examples, constraints, timeLimit, memoryLimit } = problem;
+  const activeRoundNumber = mode === 'constraint' ? 3 : mode === 'relay' ? 2 : (problem.roundNumber || 1);
 
   const getDifficultyBadge = () => {
     switch (difficulty) {
@@ -134,9 +135,9 @@ export default function ProblemPanel({
         {activeTab === 'submissions' && submissionHistoryChild}
       </div>
 
-      {/* Footer Navigation (only for Round 1 standard) */}
+      {/* Footer Navigation */}
       <ProblemNavigation
-        roundNumber={roundNumber}
+        roundNumber={activeRoundNumber}
         prevProblemId={prevProblemId}
         nextProblemId={nextProblemId}
         onNavigate={onNavigate}
