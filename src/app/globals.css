@@ -1,26 +1,116 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Command Center Dark Palette */
+  --background: #070814;
+  --surface: #0d0e24;
+  --surface-elevated: #131535;
+  --surface-secondary: #10122b;
+  --surface-interactive: #1a1d42;
+
+  /* Border Tokens */
+  --border: #1e224d;
+  --border-subtle: #141738;
+  --border-active: #8b5cf6;
+  --border-focus: #06b6d4;
+
+  /* Typography Tokens */
+  --text-primary: #ffffff;
+  --text-secondary: #a5b4fc;
+  --text-muted: #64748b;
+  --text-on-accent: #ffffff;
+
+  /* Brand Accents */
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-subtle: rgba(139, 92, 246, 0.15);
+  --accent-border: rgba(139, 92, 246, 0.35);
+
+  --cyan: #06b6d4;
+  --cyan-subtle: rgba(6, 182, 212, 0.15);
+
+  /* Status Colors */
+  --success: #10b981;
+  --success-subtle: rgba(16, 185, 129, 0.15);
+
+  --warning: #f59e0b;
+  --error: #f43f5e;
+  --focus: #06b6d4;
+  --disabled: #1e2438;
+
+  /* Layout Tokens */
+  --sidebar-width: 250px;
+  --topbar-height: 4rem;
+  --content-max-width: 1600px;
+  --panel-radius: 0.75rem;
+
+  /* Typography Font Stacks */
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-cyan: var(--cyan);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom Scrollbar for Arena Command Center */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Glow Utilities */
+.purple-glow {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.25);
+}
+
+.cyan-glow {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+/* Waveform pulse animation */
+@keyframes wavePulse {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.animate-wave-1 { animation: wavePulse 1.2s infinite ease-in-out; }
+.animate-wave-2 { animation: wavePulse 1.2s infinite ease-in-out 0.2s; }
+.animate-wave-3 { animation: wavePulse 1.2s infinite ease-in-out 0.4s; }
