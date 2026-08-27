@@ -1,12 +1,24 @@
+'use client';
+
+import React, { use } from 'react';
+import CodingIDE from '@/components/ide/CodingIDE';
+
 interface PageProps {
   params: Promise<{ problemId: string }>;
 }
 
-export default async function Round1ProblemPage({ params }: PageProps) {
-  const { problemId } = await params;
+export default function Round1ProblemPage({ params }: PageProps) {
+  const { problemId } = use(params);
+
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Round 1 Problem Page: {problemId}</h1>
-    </div>
+    <CodingIDE
+      problemId={problemId}
+      roundNumber={1}
+      mode="standard"
+      roundConfig={{
+        mode: 'standard',
+        problemIds: [problemId],
+      }}
+    />
   );
 }

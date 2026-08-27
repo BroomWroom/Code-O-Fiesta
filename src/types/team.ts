@@ -1,10 +1,17 @@
-export interface Member {
+import type { TeamMember, TeamStatus } from '@/constants/event';
+
+export interface TeamMemberInfo {
+  id: TeamMember;
   name: string;
-  role: string;
+  isActive: boolean;
+  isConnected: boolean;
 }
 
 export interface Team {
   id: string;
   name: string;
-  members: Member[];
+  members: TeamMemberInfo[];
+  status: TeamStatus;
+  score: number;
+  rank?: number;
 }
