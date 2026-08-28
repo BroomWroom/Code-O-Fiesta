@@ -34,7 +34,7 @@ import ErrorState from '@/components/common/ErrorState';
 import ForcedSwitchOverlay from '@/components/round2/ForcedSwitchOverlay';
 import ActiveMemberIndicator from '@/components/round2/ActiveMemberIndicator';
 import RelayStatus from '@/components/round2/RelayStatus';
-import ConstraintPanel from '@/components/round3/ConstraintPanel';
+
 
 const CodeEditor = dynamic(() => import('./CodeEditor'), { ssr: false });
 
@@ -270,6 +270,9 @@ export default function CodingIDE({
               hideProblemStatement={hideProblemStatement}
               prevProblemId={prevProblemId}
               nextProblemId={nextProblemId}
+              submitResult={submitResult}
+              submissionCount={submissionHistory.length}
+              isSolved={isSolved}
               onNavigate={(id) => {
                 // Navigate to next/prev problem using dynamic round path
                 window.location.href = `/round-${roundNumber}/problem/${id}`;
