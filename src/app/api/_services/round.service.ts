@@ -246,6 +246,7 @@ async function ensureQuestionsInitialized(
         member2EndsAt: null,
         status: 'PENDING',
         code: '',
+        hasSeenBothPhases: false,
       });
     }
     teamRoundDoc.round2.questions = questions;
@@ -375,24 +376,15 @@ async function applyLazyPhaseHandover(input: Round2ScopedInput): Promise<void> {
     }
 
     const currentPhase = teamRound.round2.phase as Round2Phase;
-    const currentQNum = teamRound.round2.currentQuestionNumber ?? 1;
+    const qIdxForPhase = (teamRound.round2.currentQuestionNumber ?? 1) - 1;
 
-    const prevPhase = currentPhase;
-
-    if (prevPhase === Round2Phase.MEMBER_2) {
-      const questionCount = roundDoc?.configuration?.round2?.questionCount ?? 0;
-      if (currentQNum < questionCount) {
-        teamRound.round2.currentQuestionNumber = currentQNum + 1;
-        const nextQIdx = currentQNum;
-        if (teamRound.round2.questions && teamRound.round2.questions[nextQIdx]) {
-          teamRound.round2.questions[nextQIdx].status = 'IN_PROGRESS';
-        }
-      } else {
-        teamRound.status = TeamRoundStatus.COMPLETED;
-        teamRound.completedAt = now;
-        teamRound.round2.phase = Round2Phase.COMPLETED;
-        changed = true;
-        break;
+    if (currentPhase === Round2Phase.MEMBER_2) {
+      const currQIdx = qIdxForPhase;
+      if (
+        teamRound.round2.questions &&
+        teamRound.round2.questions[currQIdx]
+      ) {
+        teamRound.round2.questions[currQIdx].hasSeenBothPhases = true;
       }
     }
 
@@ -400,7 +392,13 @@ async function applyLazyPhaseHandover(input: Round2ScopedInput): Promise<void> {
     teamRound.round2.phase = next.phase;
     teamRound.round2.activeMember = next.activeMember;
     teamRound.round2.phaseStartedAt = new Date(phaseEndsAtMs);
-    const rawEnd = phaseEndsAtMs + next.durationMs;
+
+    let rawEnd: number;
+    if (currentPhase === Round2Phase.MEMBER_2) {
+      rawEnd = phaseEndsAtMs + 0;
+    } else {
+      rawEnd = phaseEndsAtMs + next.durationMs;
+    }
     const clampedEnd = Math.min(rawEnd, globalEndsAtMs);
     teamRound.round2.phaseEndsAt = new Date(clampedEnd);
 
@@ -411,7 +409,11 @@ async function applyLazyPhaseHandover(input: Round2ScopedInput): Promise<void> {
       q.phase = next.phase;
       if (next.phase === Round2Phase.MEMBER_1) {
         q.member1StartedAt = new Date(phaseEndsAtMs);
-        q.member1EndsAt = new Date(clampedEnd);
+        if (currentPhase === Round2Phase.MEMBER_2) {
+          q.member1EndsAt = new Date(clampedEnd);
+        } else {
+          q.member1EndsAt = new Date(clampedEnd);
+        }
       } else {
         q.member2StartedAt = new Date(phaseEndsAtMs);
         q.member2EndsAt = new Date(clampedEnd);
@@ -488,8 +490,22 @@ async function getState(input: Round2ScopedInput): Promise<Round2StateView> {
     !isGlobalExpired &&
     actor.teamMember === activeMember;
 
-  const canSubmitCode = canEditCode;
-  const canCompleteQuestion = canEditCode && currentQuestion !== null;
+  const phaseTimerExpired =
+    phaseEndsAt !== null && phaseEndsAt !== undefined && msNow >= phaseEndsAt.getTime();
+  const canSubmitCode =
+    phase !== Round2Phase.COMPLETED &&
+    roundStatus === TeamRoundStatus.IN_PROGRESS &&
+    !isGlobalExpired &&
+    actor.teamMember === activeMember &&
+    phaseTimerExpired;
+
+  const seenBothPhases = currentQuestion ? currentQuestion.hasSeenBothPhases === true : false;
+  const canCompleteQuestion =
+    canEditCode &&
+    phase === Round2Phase.MEMBER_1 &&
+    currentQuestion !== null &&
+    seenBothPhases &&
+    phaseTimerExpired;
 
   const allowedActions: Round2AllowedActions = {
     canSeeProblem,
@@ -621,6 +637,24 @@ async function patchCode(
     );
   }
 
+  const phaseEndsAt = teamRound.round2?.phaseEndsAt as Date | null | undefined;
+  if (phaseEndsAt === null || phaseEndsAt === undefined) {
+    throw new RoundRequestError(
+      'Phase timer has not been initialized. Cannot submit code yet.',
+      403,
+      'PHASE_TIMER_NOT_INITIALIZED',
+    );
+  }
+  if (msNow < phaseEndsAt.getTime()) {
+    throw new RoundRequestError(
+      `Code submission is locked until the phase timer expires. Remaining: ${Math.ceil(
+        (phaseEndsAt.getTime() - msNow) / 1000,
+      )} seconds.`,
+      403,
+      'SUBMISSION_BLOCKED_UNTIL_TIMER_EXPIRES',
+    );
+  }
+
   const currentQNum = teamRound.round2?.currentQuestionNumber ?? 1;
   const qIdx = currentQNum - 1;
 
@@ -707,6 +741,21 @@ async function complete(
         'QUESTION_ID_MISMATCH',
       );
     }
+  }
+
+  if (teamRound.round2.phase !== Round2Phase.MEMBER_1) {
+    throw new RoundRequestError(
+      'Only Member 1 may complete a question and advance to the next question.',
+      403,
+      'COMPLETE_REQUIRES_MEMBER_1',
+    );
+  }
+  if (activeQuestion.hasSeenBothPhases !== true) {
+    throw new RoundRequestError(
+      'Cannot complete this question yet. Both members must serve their full phase timers at least once before advancing.',
+      403,
+      'COMPLETE_NOT_READY',
+    );
   }
 
   activeQuestion.status = 'COMPLETED';
