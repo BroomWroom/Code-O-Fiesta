@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:round1": "node --env-file=.env.local --import tsx scripts/seed-round1.ts"
+    "seed:round1": "node --env-file=.env.local --import tsx scripts/seed-round1.ts",
+    "seed:round3": "node --env-file=.env.local --import tsx scripts/seed-round3.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -19,7 +20,8 @@
     "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
     "rehype-katex": "^7.0.1",
-    "web-tree-sitter": "^0.26.13"
+    "tree-sitter-wasms": "^0.1.13",
+    "web-tree-sitter": "^0.20.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

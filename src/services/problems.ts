@@ -27,4 +27,12 @@ export const problemsService = {
       body: JSON.stringify({ path }),
     });
   },
+
+  startRound: async (roundNumber: number): Promise<any> => {
+    return apiCall(`/api/rounds/${roundNumber}/start`, { method: 'POST' });
+  },
+
+  fetchRoundState: async (roundNumber: number): Promise<any> => {
+    return apiCall(`/api/rounds/${roundNumber}/state`);
+  },
 };
