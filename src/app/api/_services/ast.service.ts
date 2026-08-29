@@ -3,15 +3,19 @@ import { parseSourceCode } from '../_integrations/ast/parser';
 import { analyzeAST } from '../_integrations/ast/analyzer';
 
 import { CppAdapter } from '../_integrations/ast/languages/cpp';
+import { CAdapter } from '../_integrations/ast/languages/c';
 import { JavaAdapter } from '../_integrations/ast/languages/java';
 import { PythonAdapter } from '../_integrations/ast/languages/python';
 import { JavaScriptAdapter } from '../_integrations/ast/languages/javascript';
+import { GoAdapter } from '../_integrations/ast/languages/go';
 
 const ADAPTERS: Record<string, LanguageAdapter> = {
   cpp: CppAdapter,
+  c: CAdapter,
   java: JavaAdapter,
   python: PythonAdapter,
   javascript: JavaScriptAdapter,
+  go: GoAdapter,
 };
 
 export async function analyzeSourceCode(sourceCode: string, language: string): Promise<ASTAnalysisResult> {

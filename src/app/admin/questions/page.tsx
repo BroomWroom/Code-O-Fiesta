@@ -56,7 +56,7 @@ const defaultProblem: ProblemData = {
   examples: [],
   visibleTestCases: [],
   hiddenTestCases: [],
-  allowedLanguages: ['cpp', 'java', 'python', 'javascript'],
+  allowedLanguages: ['cpp', 'c', 'java', 'python', 'javascript', 'go'],
   round3Constraints: {
     recursionRequired: false,
     noLoops: false,
