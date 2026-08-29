@@ -1,6 +1,8 @@
 import argon2 from 'argon2';
 import mongoose from 'mongoose';
+import { loadEnvConfig } from "@next/env";
 
+loadEnvConfig(process.cwd());
 import connectDB from '../src/lib/db';
 
 import Team from '../src/models/Team';

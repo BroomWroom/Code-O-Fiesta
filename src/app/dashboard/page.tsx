@@ -40,7 +40,7 @@ function DashboardContent() {
     );
   }
 
-  const enterHref = eventStatus === 'COMPLETED' ? '/results' : ROUND_ROUTES[currentRound];
+  const enterHref = eventStatus === 'COMPLETED' ? '/results' : (ROUND_ROUTES[currentRound] || '/workshop');
   const stageLabel =
     eventStatus === 'COMPLETED' ? 'COMPLETED' : currentRound === 0 ? 'WORKSHOP' : `ROUND 0${currentRound}`;
 

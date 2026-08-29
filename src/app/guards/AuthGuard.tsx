@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
 import LoadingState from '@/components/common/LoadingState';
@@ -15,6 +15,13 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
   const router = useRouter();
   const { authenticated, loading, error, user, logout } = useAuth();
 
+  // Handle redirect to login when not authenticated
+  useEffect(() => {
+    if (!loading && (!authenticated || !user)) {
+      router.push('/login');
+    }
+  }, [loading, authenticated, user, router]);
+
   // Loading state
   if (loading) {
     return (
@@ -24,12 +31,13 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
     );
   }
 
-  // Not authenticated - redirect to login
+  // Not authenticated - show loading (will redirect via useEffect)
   if (!authenticated || !user) {
-    React.useEffect(() => {
-      router.push('/login');
-    }, [router]);
-    return null;
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <LoadingState message="Redirecting to login..." mode="full-page" />
+      </div>
+    );
   }
 
   // Check role-based access
