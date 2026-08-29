@@ -184,19 +184,7 @@ export async function POST(request: Request) {
 
     // Fallback tokens if no test cases found
     if (tokens.length === 0) {
-      const mockInputs = ['4\nword\nlocalization\ninternationalization\npneumonoultramicroscopicsilicovolcanoconiosis'];
-      const mockOutputs = ['word\nl10n\ni18n\np43s'];
-      const submissions: Judge0Submission[] = mockInputs.map((input, idx) => ({
-        source_code: code,
-        language_id: languageId,
-        stdin: input,
-        expected_output: mockOutputs[idx],
-      }));
-      const batchResult = await submitBatch(submissions);
-      tokens = batchResult.map((res) => res.token);
-
-      // Update submission with tokens
-      await Submission.findByIdAndUpdate(sub._id, { 'judge0.token': tokens.join(',') });
+      return NextResponse.json({ error: 'Problem has no configured test cases' }, { status: 400 });
     }
 
     // Cache for polling

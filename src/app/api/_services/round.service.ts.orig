@@ -551,7 +551,6 @@ async function getQuestions(
       activeMember: (q.activeMember as TeamMember) ?? null,
       phase: (q.phase as Round2Phase) ?? Round2Phase.MEMBER_1,
       problem: visible ? problem ?? null : null,
-      problemId: q.problemId ?? null,
     };
   });
 

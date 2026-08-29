@@ -35,4 +35,24 @@ export const problemsService = {
   fetchRoundState: async (roundNumber: number): Promise<any> => {
     return apiCall(`/api/rounds/${roundNumber}/state`);
   },
+
+  patchRound2Code: async (sourceCode: string): Promise<any> => {
+    return apiCall('/api/rounds/2/code', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sourceCode }),
+    });
+  },
+
+  completeRound2Question: async (questionId?: string): Promise<any> => {
+    return apiCall('/api/rounds/2/complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(questionId ? { questionId } : {}),
+    });
+  },
 };

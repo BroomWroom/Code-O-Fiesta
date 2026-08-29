@@ -43,7 +43,7 @@ export function useCodingIDE(
 
   // Load code from localStorage on mount or problemId/language change
   useEffect(() => {
-    if (problemId && language) {
+    if (problemId && language && mode !== 'relay') {
       const key = `problem_${problemId}_${language}`;
       const savedCode = localStorage.getItem(key);
       if (savedCode !== null) {
@@ -52,13 +52,39 @@ export function useCodingIDE(
         setCodeState(getDefaultCode(language));
       }
     }
-  }, [problemId, language]);
+  }, [problemId, language, mode]);
 
-  // Save code to localStorage when it changes
+  // Sync server code for relay mode
+  useEffect(() => {
+    if (mode === 'relay' && roundConfig?.serverCode !== undefined) {
+      const isLocked = roundConfig?.activeTeamMember !== roundConfig?.currentUserId;
+      if (isLocked && roundConfig?.serverCode !== null) {
+        setCodeState(roundConfig.serverCode);
+      } else if (!code && roundConfig?.serverCode) {
+        setCodeState(roundConfig.serverCode);
+      }
+    }
+  }, [mode, roundConfig?.serverCode, roundConfig?.activeTeamMember, roundConfig?.currentUserId]);
+
+  const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Save code to localStorage when it changes, or sync to server for relay mode
   const setCode = (newCode: string) => {
     setCodeState(newCode);
-    if (problemId && language) {
-      localStorage.setItem(`problem_${problemId}_${language}`, newCode);
+    if (mode === 'relay') {
+      if (roundConfig?.activeTeamMember === roundConfig?.currentUserId) {
+        if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+        const t = setTimeout(() => {
+          import('@/services/problems').then((m) => {
+            m.problemsService.patchRound2Code(newCode).catch(console.error);
+          });
+        }, 1000);
+        syncTimerRef.current = t;
+      }
+    } else {
+      if (problemId && language) {
+        localStorage.setItem(`problem_${problemId}_${language}`, newCode);
+      }
     }
   };
 
