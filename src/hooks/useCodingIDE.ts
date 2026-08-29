@@ -21,6 +21,7 @@ export function getDefaultCode(language: SupportedLanguage): string {
 export function useCodingIDE(
   problemId: string,
   mode: IDEMode,
+  roundNumber: number,
   roundConfig?: RoundIDEConfig,
   readOnly?: boolean
 ) {
@@ -158,6 +159,7 @@ export function useCodingIDE(
         problemId,
         code,
         language,
+        roundNumber,
         isFirstAttempt,
       });
 

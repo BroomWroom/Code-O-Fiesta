@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import AuthGuard from '@/app/guards/AuthGuard';
 import AdminLayout from '@/components/layout/AdminLayout';
 import EventStatus from '@/components/event/EventStatus';
 import AdminDashboard from '@/components/admin/AdminDashboard';
@@ -14,7 +15,7 @@ import ErrorState from '@/components/common/ErrorState';
 import { adminService } from '@/services/admin';
 import { leaderboardService } from '@/services/leaderboard';
 
-export default function AdminPage() {
+function AdminContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -200,5 +201,13 @@ export default function AdminPage() {
 
       </div>
     </AdminLayout>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <AuthGuard requiredRole="ADMIN">
+      <AdminContent />
+    </AuthGuard>
   );
 }

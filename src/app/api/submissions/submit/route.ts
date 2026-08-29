@@ -12,7 +12,7 @@ declare global {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { problemId, code, language } = body;
+    const { problemId, code, language, roundNumber } = body;
 
     const languageId = LANGUAGE_IDS[language];
     if (!languageId) {
@@ -23,11 +23,15 @@ export async function POST(request: Request) {
     let tokens: string[] = [];
     let problemDetails: any = null;
 
+    // AST constraint analysis is only used in Round 3.
+    // Skip it for Round 1 and Round 2 to avoid tree-sitter initialisation errors.
     let astResult: any = undefined;
-    try {
-      astResult = await analyzeSourceCode(code, language);
-    } catch (astErr) {
-      console.error('AST Analysis failed during submission:', astErr);
+    if (roundNumber === 3) {
+      try {
+        astResult = await analyzeSourceCode(code, language);
+      } catch (astErr) {
+        console.error('AST Analysis failed during submission:', astErr);
+      }
     }
 
     if (process.env.MONGODB_URI) {
