@@ -10,6 +10,7 @@ import AdminRoundStatus from '@/components/admin/AdminRoundStatus';
 import AdminTeamTable from '@/components/admin/AdminTeamTable';
 import AdminSubmissionTable from '@/components/admin/AdminSubmissionTable';
 import AdminLeaderboard from '@/components/admin/AdminLeaderboard';
+import AdminNav from '@/components/admin/AdminNav';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import { adminService } from '@/services/admin';
@@ -125,7 +126,7 @@ function AdminContent() {
 
   if (loading) {
     return (
-      <AdminLayout title="Organizer Control Panel">
+      <AdminLayout title="Organizer Control Panel" nav={<AdminNav />}>
         <LoadingState message="Loading administrative data feeds..." mode="full-page" />
       </AdminLayout>
     );
@@ -133,7 +134,7 @@ function AdminContent() {
 
   if (error) {
     return (
-      <AdminLayout title="Organizer Control Panel">
+      <AdminLayout title="Organizer Control Panel" nav={<AdminNav />}>
         <ErrorState
           title="Administrative Sync Failed"
           message={error}
@@ -152,10 +153,11 @@ function AdminContent() {
     <AdminLayout
       title="Organizer Control Panel"
       subtitle="VITC Code-O-Fiesta Live Event Operations"
+      nav={<AdminNav />}
       actions={<EventStatus status={statusType} label={statusLabel} />}
     >
       <div className="flex flex-col gap-6">
-        
+
         {/* Quick telemetry metrics */}
         <AdminDashboard
           totalTeams={teams.length}
@@ -181,7 +183,7 @@ function AdminContent() {
 
         {/* Main interactive grids */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-          
+
           {/* Teams Directory Table */}
           <div className="xl:col-span-8">
             <AdminTeamTable

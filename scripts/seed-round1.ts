@@ -156,10 +156,12 @@ async function ensureDemoRound() {
   const round = await Round.findOneAndUpdate(
     { roundNumber: 1 },
     {
+      $set: {
+        status: RoundStatus.ACTIVE,
+      },
       $setOnInsert: {
         roundNumber: 1,
         name: 'Round 1',
-        status: RoundStatus.ACTIVE,
         durationSeconds: 3600,
         startedAt: new Date(),
         endsAt: new Date(Date.now() + 3600 * 1000),

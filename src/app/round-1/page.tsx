@@ -216,6 +216,7 @@ function Round1PageContent() {
     setShowReveal(false);
   };
 
+  // Still loading path decision
   if (selectedPath === null) {
     return (
       <ParticipantLayout>

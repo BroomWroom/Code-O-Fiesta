@@ -17,20 +17,20 @@ import { RoundStatus } from '@/constants/event';
 declare global {
   var submissionCache:
     | Map<
-        string,
-        {
-          code: string;
-          language: string;
-          problemId: string;
-          roundNumber?: number;
-          tokens?: string[];
-          astResult?: any;
-          teamId?: string;
-          userId?: string;
-          roundId?: string;
-          isFirstAttempt?: boolean;
-        }
-      >
+      string,
+      {
+        code: string;
+        language: string;
+        problemId: string;
+        roundNumber?: number;
+        tokens?: string[];
+        astResult?: any;
+        teamId?: string;
+        userId?: string;
+        roundId?: string;
+        isFirstAttempt?: boolean;
+      }
+    >
     | undefined;
 }
 
@@ -103,9 +103,9 @@ export async function POST(request: Request) {
           testCases.length > 0
             ? testCases
             : (problem.examples || []).map((ex: any) => ({
-                input: ex.input,
-                expectedOutput: ex.output,
-              }));
+              input: ex.input,
+              expectedOutput: ex.output,
+            }));
 
         if (testsToRun.length > 0) {
           const submissions: Judge0Submission[] = testsToRun.map((tc: any) => ({
@@ -113,6 +113,8 @@ export async function POST(request: Request) {
             language_id: languageId,
             stdin: tc.input || '',
             expected_output: tc.expectedOutput || '',
+            cpu_time_limit: problem.cpuTimeLimit || 2.0,
+            memory_limit: problem.memoryLimit || 128000,
           }));
 
           const batchResult = await submitBatch(submissions);
