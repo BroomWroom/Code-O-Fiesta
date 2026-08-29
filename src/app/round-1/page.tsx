@@ -131,6 +131,8 @@ function Round1PageContent() {
   const [showReveal, setShowReveal] = useState(false);
   const [problems, setProblems] = useState<Round1Problem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingProblems, setIsLoadingProblems] = useState(false);
+  const [problemError, setProblemError] = useState<string | null>(null);
 
   // Map pathId to backend ProblemTopic enum
   const PATH_TO_ENUM: Record<number, string> = {
