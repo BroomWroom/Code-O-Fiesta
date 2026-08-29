@@ -27,9 +27,11 @@ export async function parseSourceCode(sourceCode: string, language: string): Pro
   let wasmFileName = '';
   switch (language) {
     case 'cpp': wasmFileName = 'tree-sitter-cpp.wasm'; break;
+    case 'c': wasmFileName = 'tree-sitter-c.wasm'; break;
     case 'java': wasmFileName = 'tree-sitter-java.wasm'; break;
     case 'python': wasmFileName = 'tree-sitter-python.wasm'; break;
     case 'javascript': wasmFileName = 'tree-sitter-javascript.wasm'; break;
+    case 'go': wasmFileName = 'tree-sitter-go.wasm'; break;
     default: throw new Error(`Unsupported language: ${language}`);
   }
   

@@ -104,6 +104,10 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
     switch (lang) {
       case 'cpp':
         return 'cpp';
+      case 'c':
+        return 'c';
+      case 'go':
+        return 'go';
       case 'python':
         return 'python';
       case 'java':
