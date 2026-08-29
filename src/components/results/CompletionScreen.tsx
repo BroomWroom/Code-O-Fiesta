@@ -71,18 +71,7 @@ export default function CompletionScreen({
         roundBreakdowns={roundBreakdowns}
       />
 
-      {/* Big Action Redirect Button */}
-      <div className="flex justify-center mt-2">
-        <Link
-          href="/leaderboard"
-          className="px-8 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-mono font-bold text-xs uppercase tracking-widest border border-purple-400/30 hover:border-purple-300/40 shadow-lg shadow-purple-600/20 hover:shadow-purple-600/30 transition-all cursor-pointer flex items-center gap-2 group"
-        >
-          <span>VIEW LEADERBOARD</span>
-          <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </Link>
-      </div>
+
     </div>
   );
 }

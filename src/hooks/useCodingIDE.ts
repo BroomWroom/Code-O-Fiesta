@@ -13,8 +13,6 @@ export function getDefaultCode(language: SupportedLanguage): string {
       return `# write your code here\n`;
     case 'java':
       return `import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // write your code here\n    }\n}`;
-    case 'javascript':
-      return `// write your code here\n`;
     case 'go':
       return `package main\n\nimport "fmt"\n\nfunc main() {\n    // write your code here\n}\n`;
     default:
