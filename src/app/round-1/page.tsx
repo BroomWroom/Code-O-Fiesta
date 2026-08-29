@@ -130,64 +130,22 @@ function Round1PageContent() {
   const [selectedPath, setSelectedPath] = useState<number | null>(null);
   const [showReveal, setShowReveal] = useState(false);
   const [problems, setProblems] = useState<Round1Problem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isLoadingProblems, setIsLoadingProblems] = useState(false);
   const [problemError, setProblemError] = useState<string | null>(null);
 
-  // Map pathId to backend ProblemTopic enum
-  const PATH_TO_ENUM: Record<number, string> = {
-    1: 'BASIC_MATH_NUMBERS',
-    2: 'STRING_MANIPULATION',
-    3: 'ARRAYS_LOGIC',
-    4: 'LOOPS_PATTERNS',
-  };
-
   useEffect(() => {
-    const loadPathAndProblems = async () => {
-      // Example: read from localStorage for now so maze → dashboard works
-      const stored = localStorage.getItem('cof-round1-path');
-      if (stored) {
-        const pathId = Number(stored);
-        setSelectedPath(pathId);
+    const stored = localStorage.getItem('cof-round1-path');
+    if (stored) {
+      const pathId = Number(stored);
+      setSelectedPath(pathId);
 
-        // Show reveal only once per session
-        const alreadyRevealed = sessionStorage.getItem('cof-round1-revealed');
-        if (!alreadyRevealed) {
-          setShowReveal(true);
-        }
-
-        // Fetch problems for Round 1
-        try {
-          const res = await fetch('/api/rounds/1/questions');
-          if (res.ok) {
-            const data = await res.json();
-            // Filter by the topic corresponding to the selected path
-            const targetTopicEnum = PATH_TO_ENUM[pathId];
-            const filtered = data.filter((p: any) => p.topic === targetTopicEnum);
-
-            // Map to Round1Problem format
-            const formattedProblems: Round1Problem[] = filtered.map((p: any) => ({
-              id: p.id,
-              title: p.title,
-              difficulty: p.difficulty === 'easy' ? 'Easy' : p.difficulty === 'medium' ? 'Medium' : 'Hard',
-              maxScore: p.points || 50,
-              status: 'available', // This should eventually come from team state
-            }));
-
-            setProblems(formattedProblems);
-          }
-        } catch (err) {
-          console.error("Failed to fetch problems", err);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        // No path locked yet → send them to the maze
-        router.replace('/round-1/maze');
+      const alreadyRevealed = sessionStorage.getItem('cof-round1-revealed');
+      if (!alreadyRevealed) {
+        setShowReveal(true);
       }
-    };
-
-    loadPathAndProblems();
+    } else {
+      router.replace('/round-1/maze');
+    }
   }, [router]);
 
   useEffect(() => {
@@ -259,11 +217,11 @@ function Round1PageContent() {
   };
 
   // Still loading path decision
-  if (selectedPath === null || isLoading) {
+  if (selectedPath === null) {
     return (
       <ParticipantLayout>
         <div className="flex items-center justify-center min-h-[40vh] text-slate-400 text-sm">
-          Loading your path and problems…
+          Loading your path…
         </div>
       </ParticipantLayout>
     );
