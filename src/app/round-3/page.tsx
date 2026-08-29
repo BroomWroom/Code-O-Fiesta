@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import RoundTimer from '@/components/timer/RoundTimer';
 
@@ -53,7 +54,7 @@ const PROBLEMS: CrucibleProblem[] = [
   },
 ];
 
-export default function Round3DashboardPage() {
+function Round3PageContent() {
   const totalRoundScore = 140;
   const maxRoundScore = 420;
   const solvedCount = 1;
@@ -593,5 +594,13 @@ export default function Round3DashboardPage() {
         </footer>
       </div>
     </ParticipantLayout>
+  );
+}
+
+export default function Round3DashboardPage() {
+  return (
+    <AuthGuard requiredRole="PARTICIPANT">
+      <Round3PageContent />
+    </AuthGuard>
   );
 }

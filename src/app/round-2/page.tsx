@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import RelayInstructions from '@/components/round2/RelayInstructions';
 
 const ROUND_2_ENTRY_PROBLEM_ID = 'prob-1';
 
-export default function Round2Page() {
+function Round2PageContent() {
   return (
     <ParticipantLayout>
       <style>{`
@@ -72,5 +73,13 @@ export default function Round2Page() {
         </div>
       </div>
     </ParticipantLayout>
+  );
+}
+
+export default function Round2Page() {
+  return (
+    <AuthGuard requiredRole="PARTICIPANT">
+      <Round2PageContent />
+    </AuthGuard>
   );
 }
