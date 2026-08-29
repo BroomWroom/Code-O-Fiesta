@@ -12,6 +12,59 @@ import {
   PATH_TO_TOPIC,
 } from '@/app/api/_services/problem.service';
 
+// ── GET /api/rounds/1/path ─────────────────────────────────────────────────
+// Returns whether the authenticated team has already locked a Round 1 path.
+// The maze page calls this on mount so the backend — not localStorage — is
+// the single source of truth for the path-lock guard.
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ roundNumber: string }> }
+) {
+  try {
+    const { roundNumber } = await params;
+
+    if (roundNumber !== '1') {
+      return NextResponse.json({ error: 'This endpoint only supports Round 1' }, { status: 400 });
+    }
+
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    }
+
+    const team = await getUserTeam((user as any)._id as Types.ObjectId);
+    if (!team) {
+      return NextResponse.json({ error: 'No team found for this user' }, { status: 404 });
+    }
+
+    const round = await getActiveRound(1);
+    if (!round) {
+      return NextResponse.json({ locked: false });
+    }
+
+    await connectDB();
+
+    const teamRound = await TeamRound.findOne({
+      teamId: (team as any)._id as Types.ObjectId,
+      roundId: (round as any)._id as Types.ObjectId,
+    })
+      .select('round1.selectedPath')
+      .lean();
+
+    const selectedPath = (teamRound as any)?.round1?.selectedPath ?? null;
+
+    return NextResponse.json({
+      locked: !!selectedPath,
+      path: selectedPath,
+    });
+  } catch (err: unknown) {
+    console.error('[GET /api/rounds/[roundNumber]/path]', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// ── POST /api/rounds/1/path ────────────────────────────────────────────────
+// Locks the selected path for the team. Returns 409 if already locked.
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ roundNumber: string }> }

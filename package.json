@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:round1": "node --env-file=.env.local --import tsx scripts/seed-round1.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

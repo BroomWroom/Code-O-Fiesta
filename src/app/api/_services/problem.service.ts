@@ -7,6 +7,7 @@ import Round from '@/models/Round';
 import TeamRound from '@/models/TeamRound';
 import Problem from '@/models/Problem';
 import Submission from '@/models/Submission';
+import { verifySession } from '@/app/api/_lib/auth';
 import { Round1Path, Round1Topic, RoundStatus, SubmissionVerdict } from '@/constants/event';
 
 export const PATH_TO_TOPIC: Record<Round1Path, Round1Topic> = {
@@ -21,9 +22,14 @@ export async function getAuthenticatedUser() {
   const sessionToken = cookieStore.get('session')?.value;
   if (!sessionToken) return null;
 
-  await connectDB();
-  const user = await User.findById(sessionToken).lean();
-  return user ?? null;
+  try {
+    await connectDB();
+    const session = await verifySession(sessionToken);
+    const user = await User.findById(session.userId).lean();
+    return user ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getUserTeam(userId: Types.ObjectId | string) {
@@ -56,7 +62,7 @@ export function buildSafeProblem(problem: any) {
     id: problem._id.toString(),
     title: problem.title,
     description: problem.description,
-    difficulty: problem.difficulty,
+    difficulty: String(problem.difficulty ?? 'easy').toLowerCase(),
     inputFormat: problem.inputFormat,
     outputFormat: problem.outputFormat,
     examples: problem.examples ?? [],
@@ -64,6 +70,67 @@ export function buildSafeProblem(problem: any) {
     allowedLanguages: problem.allowedLanguages ?? [],
     roundNumber: problem.roundNumber,
   };
+}
+
+export function normalizeRound1Difficulty(value?: string | null): 'Easy' | 'Medium' | 'Hard' {
+  switch ((value ?? '').toUpperCase()) {
+    case 'MEDIUM':
+      return 'Medium';
+    case 'HARD':
+      return 'Hard';
+    case 'EASY':
+    default:
+      return 'Easy';
+  }
+}
+
+export function normalizeRound1ProblemStatus(value?: string | null): 'locked' | 'available' | 'attempted' | 'solved' {
+  switch (value) {
+    case 'SOLVED':
+      return 'solved';
+    case 'IN_PROGRESS':
+      return 'attempted';
+    case 'PENDING':
+    default:
+      return 'available';
+  }
+}
+
+export async function getAssignedRound1ProblemsForTeam(teamId: Types.ObjectId | string, roundId: Types.ObjectId | string) {
+  await connectDB();
+
+  const teamRound = await TeamRound.findOne({ teamId, roundId }).lean();
+  const assignedProblems = teamRound?.round1?.problems ?? [];
+
+  if (!assignedProblems.length) {
+    return [];
+  }
+
+  const problemIds = assignedProblems
+    .map((entry: any) => entry?.problemId)
+    .filter(Boolean)
+    .map((problemId: Types.ObjectId | string) => new Types.ObjectId(problemId));
+
+  const problems = await Problem.find({ _id: { $in: problemIds } }).lean();
+  const problemMap = new Map(
+    problems.map((problem: any) => [problem._id.toString(), problem]),
+  );
+
+  return assignedProblems
+    .map((entry: any) => {
+      const problem = problemMap.get(entry?.problemId?.toString());
+      if (!problem) return null;
+
+      return {
+        id: problem._id.toString(),
+        title: problem.title,
+        difficulty: normalizeRound1Difficulty(problem.difficulty),
+        maxScore: 50,
+        status: normalizeRound1ProblemStatus(entry?.status),
+        solvedAt: entry?.status === 'SOLVED' ? new Date().toISOString() : undefined,
+      };
+    })
+    .filter(Boolean);
 }
 
 export async function selectProblemsForTopic(topic: Round1Topic, count = 3) {
