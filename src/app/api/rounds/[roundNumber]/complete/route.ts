@@ -7,14 +7,38 @@ import { requireAuthentication } from '@/app/api/_lib/authorization';
 import { TeamRoundStatus } from '@/constants/event';
 import { getRound3 } from '@/app/api/_services/round3.service';
 
+import { roundErrorResponse, roundService } from '../../../_services/round.service';
+import {
+  parsePostRound2CompleteBody,
+  parseRound2Params,
+  readJsonBody,
+} from '../../../_validators/round';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ roundNumber: string }> },
 ) {
   try {
     const { roundNumber } = await params;
+    
+    // Round 2 handling
+    if (roundNumber === '2') {
+      const body = parsePostRound2CompleteBody(await readJsonBody(request));
+      const actor = await roundService.resolveActor(request);
+      const scoped = { roundNumber: 2 as const, actor };
+
+      await roundService.applyLazyPhaseHandover(scoped);
+      const result = await roundService.complete({ ...scoped, body });
+
+      return NextResponse.json(result);
+    }
+    
+    // Round 3 handling
     if (roundNumber !== '3') {
-      return NextResponse.json({ error: 'This endpoint only supports Round 3' }, { status: 400 });
+      return NextResponse.json({ error: 'This endpoint only supports Round 2 and Round 3' }, { status: 400 });
     }
 
     const session = await requireAuthentication(request);

@@ -12,6 +12,12 @@ import {
 } from '@/app/api/_services/problem.service';
 import { RoundStatus } from '@/constants/event';
 
+import { roundErrorResponse, roundService } from '../../../_services/round.service';
+import { parseRound2Params } from '../../../_validators/round';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ roundNumber: string }> },
@@ -20,11 +26,15 @@ export async function GET(
     const { roundNumber } = await params;
     const parsedRoundNumber = Number(roundNumber);
 
-    if (!Number.isInteger(parsedRoundNumber) || ![1, 3].includes(parsedRoundNumber)) {
-      return NextResponse.json(
-        { error: 'This endpoint only supports Round 1 and Round 3' },
-        { status: 400 },
-      );
+    // ── Round 2 ────────────────────────────────────────────────────────────
+    if (parsedRoundNumber === 2) {
+      const actor = await roundService.resolveActor(request);
+      const scoped = { roundNumber: 2 as const, actor };
+
+      await roundService.applyLazyPhaseHandover(scoped);
+      const questions = await roundService.getQuestions(scoped);
+
+      return NextResponse.json(questions);
     }
 
     // ── Round 1 ────────────────────────────────────────────────────────────
