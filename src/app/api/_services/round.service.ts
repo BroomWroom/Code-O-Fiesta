@@ -5,7 +5,7 @@ import connectDB from '@/lib/db';
 import Problem, { type ProblemDocument } from '@/models/Problem';
 import Round from '@/models/Round';
 import TeamRound from '@/models/TeamRound';
-import User from '@/models/User';
+import { requireAuthentication } from '@/app/api/_lib/authorization';
 
 import {
   RoundRequestError,
@@ -133,54 +133,21 @@ export type PostRound2CompleteResult = {
   round2: unknown;
 };
 
-function parseCookieHeader(cookie: string | null): Record<string, string> {
-  const out: Record<string, string> = {};
-  if (!cookie) return out;
-  for (const part of cookie.split(';')) {
-    const [rawKey, rawValue] = part.trim().split('=');
-    if (rawKey && rawValue !== undefined) {
-      out[decodeURIComponent(rawKey.trim())] = decodeURIComponent(rawValue.trim());
-    }
-  }
-  return out;
-}
-
 async function resolveActor(request: Request): Promise<Round2Actor> {
-  await connectDB();
-
-  const headers = request.headers;
-  const cookies = parseCookieHeader(headers.get('cookie'));
-
-  const rawUserId =
-    cookies['user_id'] ||
-    cookies['userId'] ||
-    headers.get('x-user-id') ||
-    (() => {
-      const auth = headers.get('authorization');
-      if (auth && auth.startsWith('Bearer ')) return auth.slice(7);
-      return null;
-    })();
-
-  if (!rawUserId) {
+  // Verify the signed JWT 'session' cookie — same as every other route in this codebase.
+  // requireAuthentication throws UnauthorizedError (401) if the token is missing or invalid.
+  let session;
+  try {
+    session = await requireAuthentication(request);
+  } catch {
     throw new RoundRequestError(
-      'Authentication required. No user credentials found.',
+      'Authentication required. Please log in.',
       401,
       'UNAUTHENTICATED',
     );
   }
 
-  const userIdStr = rawUserId.trim();
-
-  const user = await User.findById(userIdStr).lean();
-  if (!user) {
-    throw new RoundRequestError(
-      'Authentication failed. User not found.',
-      401,
-      'UNAUTHENTICATED',
-    );
-  }
-
-  if (!user.teamId) {
+  if (!session.teamId) {
     throw new RoundRequestError(
       'User is not assigned to a team.',
       403,
@@ -188,7 +155,7 @@ async function resolveActor(request: Request): Promise<Round2Actor> {
     );
   }
 
-  if (!user.teamMember) {
+  if (!session.teamMember) {
     throw new RoundRequestError(
       'User team member role is not set.',
       403,
@@ -197,9 +164,9 @@ async function resolveActor(request: Request): Promise<Round2Actor> {
   }
 
   return {
-    userId: String(user._id),
-    teamId: String(user.teamId),
-    teamMember: user.teamMember as TeamMember,
+    userId: session.userId,
+    teamId: session.teamId,
+    teamMember: session.teamMember as TeamMember,
   };
 }
 
