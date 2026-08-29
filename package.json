@@ -10,13 +10,15 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "argon2": "^0.45.1",
+    "jose": "^6.2.10",
     "mongoose": "^9.9.3",
     "next": "16.3.2",
     "react": "19.2.8",
-    "react-dom": "19.2.8",
     "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
-    "rehype-katex": "^7.0.1"
+    "rehype-katex": "^7.0.1",
+    "web-tree-sitter": "^0.26.13"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -26,6 +28,10 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "argon2@0.45.1": true
   }
 }
