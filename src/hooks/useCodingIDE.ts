@@ -106,7 +106,7 @@ export function useCodingIDE(
     setCode(defaultCode);
   };
 
-  const run = async () => {
+  const run = async (runMode: 'examples' | 'custom' = 'custom') => {
     if (isRunning) return;
     setIsRunning(true);
     setRunResult(null);
@@ -116,7 +116,8 @@ export function useCodingIDE(
         problemId,
         code,
         language,
-        customInput,
+        customInput: runMode === 'custom' ? customInput : undefined,
+        mode: runMode,
       });
       setRunResult(res);
     } catch (err: any) {
