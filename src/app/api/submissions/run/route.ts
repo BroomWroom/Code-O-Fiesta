@@ -1,14 +1,32 @@
 import { NextResponse } from 'next/server';
 import { submitCode, LANGUAGE_IDS } from '@/lib/judge0';
+import connectDB from '@/lib/db';
+import Problem from '@/models/Problem';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { code, language, customInput } = body;
+    const { code, language, customInput, problemId } = body;
 
     const languageId = LANGUAGE_IDS[language];
     if (!languageId) {
       return NextResponse.json({ error: 'Unsupported language' }, { status: 400 });
+    }
+    
+    let cpu_time_limit = 2.0;
+    let memory_limit = 128000;
+    
+    if (problemId && process.env.MONGODB_URI) {
+      try {
+        await connectDB();
+        const problem = await Problem.findById(problemId);
+        if (problem) {
+          cpu_time_limit = problem.cpuTimeLimit || 2.0;
+          memory_limit = problem.memoryLimit || 128000;
+        }
+      } catch (e) {
+        console.error('Error fetching problem limits for run:', e);
+      }
     }
 
     // Submit to Judge0 and wait for the result
@@ -16,6 +34,8 @@ export async function POST(request: Request) {
       source_code: code,
       language_id: languageId,
       stdin: customInput || '',
+      cpu_time_limit,
+      memory_limit,
     }, true);
 
     // If Judge0 returns asynchronously or is still processing, poll for completion

@@ -52,7 +52,9 @@ export async function POST(request: Request) {
                 source_code: code,
                 language_id: languageId,
                 stdin: tc.input || '',
-                expected_output: tc.expectedOutput || ''
+                expected_output: tc.expectedOutput || '',
+                cpu_time_limit: problem.cpuTimeLimit || 2.0,
+                memory_limit: problem.memoryLimit || 128000,
               }));
               
               const batchResult = await submitBatch(submissions);

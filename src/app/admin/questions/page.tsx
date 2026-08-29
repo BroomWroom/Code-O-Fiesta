@@ -39,6 +39,8 @@ interface ProblemData {
     noLoops: boolean;
     maxLines: number | null;
   };
+  cpuTimeLimit: number;
+  memoryLimit: number;
   isActive: boolean;
 }
 
@@ -60,6 +62,8 @@ const defaultProblem: ProblemData = {
     noLoops: false,
     maxLines: null,
   },
+  cpuTimeLimit: 2.0,
+  memoryLimit: 128000,
   isActive: true,
 };
 
@@ -396,6 +400,37 @@ export default function AdminQuestionsPage() {
                       className="w-4 h-4 rounded bg-[#0a0b1a] border-[#1e224d] text-purple-600 focus:ring-purple-500 focus:ring-offset-[#0d0e24]"
                     />
                     <label htmlFor="isActive" className="text-sm font-medium text-slate-300">Active (Visible in contest)</label>
+                  </div>
+                </div>
+
+                {/* Resource Limits */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-400 border-b border-[#1e224d] pb-2">Resource Limits (Judge0)</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-medium text-slate-300">CPU Time Limit (Seconds)</label>
+                      <input 
+                        type="number" 
+                        step="0.1"
+                        required
+                        value={editingProblem.cpuTimeLimit ?? 2.0} 
+                        onChange={(e) => updateEditingProblem('cpuTimeLimit', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                        className="bg-[#0a0b1a] border border-[#1e224d] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-medium text-slate-300">Memory Limit (KB)</label>
+                      <input 
+                        type="number"
+                        required
+                        value={editingProblem.memoryLimit ?? 128000} 
+                        onChange={(e) => updateEditingProblem('memoryLimit', e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                        className="bg-[#0a0b1a] border border-[#1e224d] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                      />
+                      <span className="text-xs text-slate-500">Default: 128000 KB (128 MB)</span>
+                    </div>
                   </div>
                 </div>
 
