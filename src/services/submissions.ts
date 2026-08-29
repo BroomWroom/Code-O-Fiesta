@@ -21,6 +21,7 @@ export const submissionsService = {
     problemId: string;
     code: string;
     language: string;
+    roundNumber?: number;
     isFirstAttempt?: boolean;
   }): Promise<{ submissionId: string }> => {
     return apiCall('/api/submissions/submit', {
