@@ -49,7 +49,7 @@ const defaultProblem: ProblemData = {
   description: '',
   difficulty: ProblemDifficulty.EASY,
   roundNumber: 1,
-  topic: ProblemTopic.GENERAL,
+  topic: ProblemTopic.BASIC_MATH_NUMBERS,
   constraints: '',
   inputFormat: '',
   outputFormat: '',
@@ -362,7 +362,10 @@ export default function AdminQuestionsPage() {
                         onChange={(e) => updateEditingProblem('topic', e.target.value)}
                         className="bg-[#0a0b1a] border border-[#1e224d] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
                       >
-                        {Object.values(ProblemTopic).map(t => <option key={t} value={t}>{t}</option>)}
+                        <option value="BASIC_MATH_NUMBERS">BASIC_MATH_NUMBERS (△ Triangle)</option>
+                        <option value="STRING_MANIPULATION">STRING_MANIPULATION (○ Circle)</option>
+                        <option value="ARRAYS_LOGIC">ARRAYS_LOGIC (□ Square)</option>
+                        <option value="LOOPS_PATTERNS">LOOPS_PATTERNS (☆ Star)</option>
                       </select>
                     </div>
 

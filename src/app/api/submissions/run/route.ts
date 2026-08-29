@@ -4,9 +4,12 @@ import Problem from '@/models/Problem';
 import { executeTestCases, calculateVerdict, ExecutionMode } from '../../_services/judge.service';
 
 export async function POST(request: Request) {
+  const t0 = performance.now();
+  
   try {
     const body = await request.json();
     const { code, language, customInput, problemId, mode = 'custom' } = body;
+    const tParsed = performance.now();
 
     let cpuTimeLimit = 2.0;
     let memoryLimit = 128000;
@@ -16,10 +19,15 @@ export async function POST(request: Request) {
       testCases = [{ input: customInput || '' }];
     }
 
+    let tDbStart = performance.now();
+    let tDbEnd = tDbStart;
+
     if (problemId && process.env.MONGODB_URI) {
       try {
+        tDbStart = performance.now();
         await connectDB();
         const problem = await Problem.findById(problemId);
+        tDbEnd = performance.now();
         if (problem) {
           cpuTimeLimit = problem.cpuTimeLimit || 2.0;
           memoryLimit = problem.memoryLimit || 128000;
@@ -38,6 +46,7 @@ export async function POST(request: Request) {
           }
         }
       } catch (e) {
+        tDbEnd = performance.now();
         console.error('Error fetching problem details for run:', e);
       }
     }
@@ -47,6 +56,7 @@ export async function POST(request: Request) {
       testCases = [{ input: '4\nword\nlocalization\ninternationalization\npneumonoultramicroscopicsilicovolcanoconiosis', expectedOutput: 'word\nl10n\ni18n\np43s' }];
     }
 
+    const tJudgeStart = performance.now();
     const results = await executeTestCases({
       sourceCode: code,
       language,
@@ -55,6 +65,19 @@ export async function POST(request: Request) {
       memoryLimit,
       mode: mode as ExecutionMode,
     });
+    const tJudgeEnd = performance.now();
+
+    const _timings = {
+      totalMs: Math.round(performance.now() - t0),
+      parseMs: Math.round(tParsed - t0),
+      mongoMs: Math.round(tDbEnd - tDbStart),
+      judge0Ms: Math.round(tJudgeEnd - tJudgeStart),
+      testCaseCount: testCases.length,
+      language,
+      mode,
+    };
+
+    console.log('[RUN TIMINGS]', JSON.stringify(_timings));
 
     if (mode === 'custom') {
       const res = results[0];
@@ -67,6 +90,7 @@ export async function POST(request: Request) {
         compileOutput: res.compileOutput,
         executionTime: res.executionTime,
         memory: res.memory,
+        _timings,
       });
     }
 
@@ -79,11 +103,11 @@ export async function POST(request: Request) {
       passed,
       total: results.length,
       cases: results,
+      _timings,
     });
 
   } catch (err: any) {
     console.error('Judge0 Run Error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message, _timings: { totalMs: Math.round(performance.now() - t0) } }, { status: 500 });
   }
 }
-

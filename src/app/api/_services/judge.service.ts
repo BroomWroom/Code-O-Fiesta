@@ -82,48 +82,71 @@ export async function executeTestCases(params: ExecuteParams): Promise<TestCaseR
   const languageId = LANGUAGE_IDS[params.language];
   if (!languageId) throw new Error('Unsupported language');
 
+  const { submitCode } = await import('@/lib/judge0');
+  const decodeBase64 = (str: string | null) => str ? Buffer.from(str, 'base64').toString('utf-8') : '';
+
+  // For custom mode or single test case: direct execution (fastest path)
+  if (params.mode === 'custom' || params.testCases.length <= 1) {
+    const tc = params.testCases[0] || { input: '' };
+    const result = await submitCode({
+      source_code: params.sourceCode,
+      language_id: languageId,
+      stdin: tc.input || '',
+      expected_output: undefined,
+      cpu_time_limit: params.cpuTimeLimit || 2.0,
+      memory_limit: params.memoryLimit || 128000,
+    }, true);
+
+    const stdout = decodeBase64(result.stdout);
+    const stderr = decodeBase64(result.stderr);
+    const compileOutput = decodeBase64(result.compile_output);
+
+    let matchesExpected = true;
+    if (params.mode !== 'custom' && tc.expectedOutput !== undefined) {
+      matchesExpected = compareOutputs(stdout, tc.expectedOutput);
+    }
+
+    const verdict = mapJudge0StatusToVerdict(result.status.id, matchesExpected, params.mode);
+
+    return [{
+      caseNumber: 1,
+      verdict,
+      input: tc.input,
+      expectedOutput: params.mode !== 'custom' ? tc.expectedOutput : undefined,
+      actualOutput: stdout,
+      stderr,
+      compileOutput,
+      executionTime: result.time ? parseFloat(result.time) * 1000 : 0,
+      memory: result.memory || 0,
+      matchesExpected,
+    }];
+  }
+
+  // For examples/submit with multiple test cases: concurrent execution
+  // Each submission uses the NATIVE language_id, so Judge0 handles
+  // compilation separately from execution. Compilation time does NOT
+  // count against cpu_time_limit.
   const submissions: Judge0Submission[] = params.testCases.map(tc => ({
     source_code: params.sourceCode,
     language_id: languageId,
     stdin: tc.input || '',
-    expected_output: undefined, // We compare manually
+    expected_output: undefined,
     cpu_time_limit: params.cpuTimeLimit || 2.0,
     memory_limit: params.memoryLimit || 128000,
   }));
 
-  const batchResult = await submitBatch(submissions);
-  const tokens = batchResult.map(res => res.token);
-
-  // Poll for results
-  let attempts = 0;
-  const maxAttempts = 15;
-  let finalSubmissions: Judge0Result[] = [];
-  
-  while (attempts < maxAttempts) {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const batch = await getBatchSubmissions(tokens);
-    const subs = batch.submissions;
-    
-    const allDone = subs.every(sub => sub.status && sub.status.id !== 1 && sub.status.id !== 2);
-    if (allDone) {
-      finalSubmissions = subs;
-      break;
-    }
-    attempts++;
-  }
-
-  if (finalSubmissions.length === 0) {
-    throw new Error('Execution timed out while waiting for Judge0');
-  }
-
-  const decodeBase64 = (str: string | null) => str ? Buffer.from(str, 'base64').toString('utf-8') : '';
+  // Fire all test cases concurrently with wait=true
+  // Judge0 compiles each independently but all requests start simultaneously
+  const finalSubmissions = await Promise.all(
+    submissions.map(sub => submitCode(sub, true))
+  );
 
   return finalSubmissions.map((res, idx) => {
     const tc = params.testCases[idx];
     const stdout = decodeBase64(res.stdout);
     const stderr = decodeBase64(res.stderr);
     const compileOutput = decodeBase64(res.compile_output);
-    
+
     let matchesExpected = true;
     if (params.mode !== 'custom' && tc.expectedOutput !== undefined) {
       matchesExpected = compareOutputs(stdout, tc.expectedOutput);
