@@ -2,7 +2,7 @@ export type SupportedLanguage = 'cpp' | 'python' | 'java' | 'javascript';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type IDEMode = 'standard' | 'relay' | 'constraint';
 
-export interface Problem {
+export interface RoundProblem {
   id: string;
   title: string;
   difficulty: Difficulty;
@@ -10,10 +10,13 @@ export interface Problem {
   statement: string;
   examples: Example[];
   constraints: string[];
-  timeLimit: number;   // ms
-  memoryLimit: number; // KB
+  timeLimit: number;
+  memoryLimit: number;
   roundNumber: 1 | 2 | 3;
+  status?: string;
 }
+
+export interface Problem extends RoundProblem {}
 
 export interface Example {
   input: string;

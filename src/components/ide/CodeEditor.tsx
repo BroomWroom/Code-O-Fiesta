@@ -117,10 +117,6 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
 
   return (
     <div className="absolute inset-0 w-full h-full">
-      <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap"
-        rel="stylesheet"
-      />
       <style dangerouslySetInnerHTML={{ __html: `
         .text-decoration-squiggly-red {
           text-decoration: underline red wavy !important;
@@ -146,7 +142,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
         onMount={handleEditorDidMount}
         options={{
           glyphMargin: true,
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "var(--font-jetbrains-mono), 'JetBrains Mono', monospace",
           fontSize: fontSize,
           lineNumbers: 'on',
           minimap: { enabled: false },
