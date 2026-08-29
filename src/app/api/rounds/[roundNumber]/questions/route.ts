@@ -26,6 +26,7 @@ export async function GET(
             timeLimit: 1000,
             memoryLimit: 256000,
             roundNumber: p.roundNumber,
+            topic: p.topic,
           })));
         }
       } catch (dbErr) {
