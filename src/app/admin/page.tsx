@@ -14,6 +14,8 @@ import ErrorState from '@/components/common/ErrorState';
 import { adminService } from '@/services/admin';
 import { leaderboardService } from '@/services/leaderboard';
 
+import AdminNav from '@/components/admin/AdminNav';
+
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +126,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <AdminLayout title="Organizer Control Panel">
+      <AdminLayout title="Organizer Control Panel" nav={<AdminNav />}>
         <LoadingState message="Loading administrative data feeds..." mode="full-page" />
       </AdminLayout>
     );
@@ -132,7 +134,7 @@ export default function AdminPage() {
 
   if (error) {
     return (
-      <AdminLayout title="Organizer Control Panel">
+      <AdminLayout title="Organizer Control Panel" nav={<AdminNav />}>
         <ErrorState
           title="Administrative Sync Failed"
           message={error}
@@ -151,6 +153,7 @@ export default function AdminPage() {
     <AdminLayout
       title="Organizer Control Panel"
       subtitle="VITC Code-O-Fiesta Live Event Operations"
+      nav={<AdminNav />}
       actions={<EventStatus status={statusType} label={statusLabel} />}
     >
       <div className="flex flex-col gap-6">
