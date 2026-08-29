@@ -13,7 +13,7 @@ export async function parseSourceCode(sourceCode: string, language: string): Pro
   if (!isInitialized) {
     await Parser.init({
       locateFile(scriptName: string) {
-        if (scriptName === 'tree-sitter.wasm') {
+        if (scriptName === 'tree-sitter.wasm' || scriptName === 'web-tree-sitter.wasm') {
           return path.join(process.cwd(), 'node_modules', 'web-tree-sitter', 'tree-sitter.wasm');
         }
         return scriptName;

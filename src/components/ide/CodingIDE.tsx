@@ -90,7 +90,7 @@ export default function CodingIDE({
     submit,
     resetCode,
     fetchHistory,
-  } = useCodingIDE(problemId, mode, roundConfig, readOnly || isSolved);
+  } = useCodingIDE(problemId, mode, roundNumber, roundConfig, readOnly || isSolved);
 
   // 3. UI and layout states
   const [splitWidth, setSplitWidth] = useState(40); // left panel width %

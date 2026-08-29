@@ -11,7 +11,7 @@ export function analyzeAST(
 
   const activeFunctions: string[] = [];
 
-  function walk(node: Parser.SyntaxNode) {
+  function walk(node: Parser.Tree['rootNode']) {
     let isFunction = adapter.isFunctionDeclaration(node.type);
     let funcName = null;
 

@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import TopicReveal from '@/components/round1/TopicReveal';
 import Round1ProblemList, { Round1Problem } from '@/components/round1/Round1ProblemList';
 import { ShapeType } from '@/components/round1/ShapeCard';
+import { problemsService } from '@/services/problems';
 
-// ── Mock data (replace with real service later) ──────────────────────────────
 const PATH_TOPICS: Record<number, { shape: ShapeType; topic: string; description: string }> = {
   1: {
     shape: 'triangle',
@@ -30,13 +31,6 @@ const PATH_TOPICS: Record<number, { shape: ShapeType; topic: string; description
     description: 'Three problems focused on loops and pattern printing. Solve them in any order.',
   },
 };
-
-// Temporary mock problems – swap with real data from your service
-const MOCK_PROBLEMS: Round1Problem[] = [
-  { id: 'r1-p1', title: 'Happy Number',          maxScore: 50, status: 'available', difficulty: 'Easy' },
-  { id: 'r1-p2', title: 'First Non-Repeating',   maxScore: 50, status: 'available', difficulty: 'Easy' },
-  { id: 'r1-p3', title: 'Move Zeroes',           maxScore: 50, status: 'available', difficulty: 'Medium' },
-];
 
 // ── Right sidebar ────────────────────────────────────────────────────────────
 function Round1Sidebar({
@@ -130,10 +124,9 @@ function Round1Sidebar({
 }
 
 // ── Main page ────────────────────────────────────────────────────────────────
-export default function Round1Page() {
+function Round1PageContent() {
   const router = useRouter();
 
-  // In real app these come from team state / API
   const [selectedPath, setSelectedPath] = useState<number | null>(null);
   const [showReveal, setShowReveal] = useState(false);
   const [problems, setProblems] = useState<Round1Problem[]>([]);
@@ -147,7 +140,6 @@ export default function Round1Page() {
     4: 'LOOPS_PATTERNS',
   };
 
-  // Simulate loading the team’s locked path (replace with real fetch)
   useEffect(() => {
     const loadPathAndProblems = async () => {
       // Example: read from localStorage for now so maze → dashboard works
@@ -170,7 +162,7 @@ export default function Round1Page() {
             // Filter by the topic corresponding to the selected path
             const targetTopicEnum = PATH_TO_ENUM[pathId];
             const filtered = data.filter((p: any) => p.topic === targetTopicEnum);
-            
+
             // Map to Round1Problem format
             const formattedProblems: Round1Problem[] = filtered.map((p: any) => ({
               id: p.id,
@@ -179,7 +171,7 @@ export default function Round1Page() {
               maxScore: p.points || 50,
               status: 'available', // This should eventually come from team state
             }));
-            
+
             setProblems(formattedProblems);
           }
         } catch (err) {
@@ -195,6 +187,61 @@ export default function Round1Page() {
 
     loadPathAndProblems();
   }, [router]);
+
+  useEffect(() => {
+    if (selectedPath === null) return;
+
+    let active = true;
+
+    async function loadAssignedProblems() {
+      setIsLoadingProblems(true);
+      setProblemError(null);
+
+      try {
+        const assignedProblems = await problemsService.fetchRoundProblems(1);
+
+        if (!active) return;
+
+        const normalizedProblems: Round1Problem[] = assignedProblems
+          .map((problem): Round1Problem | null => {
+            const id = problem.id ?? (problem as any)._id ?? '';
+            if (!id) return null;
+
+            const normalizedDifficulty: 'Easy' | 'Medium' | 'Hard' =
+              problem.difficulty === 'medium'
+                ? 'Medium'
+                : problem.difficulty === 'hard'
+                  ? 'Hard'
+                  : 'Easy';
+
+            return {
+              id,
+              title: problem.title ?? 'Untitled Problem',
+              difficulty: normalizedDifficulty,
+              maxScore: typeof problem.points === 'number' ? problem.points : 50,
+              status: 'available',
+            };
+          })
+          .filter((problem): problem is Round1Problem => !!problem);
+
+        setProblems(normalizedProblems);
+      } catch (error: any) {
+        if (!active) return;
+        setProblemError(error?.message || 'Unable to load assigned problems.');
+        setProblems([]);
+      } finally {
+        if (active) {
+          setIsLoadingProblems(false);
+        }
+      }
+    }
+
+    loadAssignedProblems();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedPath]);
 
   const handleRevealContinue = () => {
     sessionStorage.setItem('cof-round1-revealed', '1');
@@ -217,7 +264,6 @@ export default function Round1Page() {
 
   return (
     <>
-      {/* Topic reveal overlay (shown once after path is locked) */}
       {showReveal && pathInfo && (
         <TopicReveal
           pathId={selectedPath}
@@ -237,13 +283,11 @@ export default function Round1Page() {
           />
         }
       >
-        {/* Breadcrumb */}
         <div className="mb-5 text-xs text-slate-500 font-mono">
           Dashboard <span className="mx-1.5 text-slate-600">›</span>
           <span className="text-purple-400">Round 1</span>
         </div>
 
-        {/* Round header */}
         <div className="mb-6">
           <div className="text-[11px] font-mono text-purple-400 tracking-widest uppercase mb-1">
             ROUND 1
@@ -253,13 +297,22 @@ export default function Round1Page() {
           </h1>
         </div>
 
-        {/* Problem list */}
         <Round1ProblemList
           pathLabel={`PATH ${selectedPath.toString().padStart(2, '0')} · ${pathInfo.shape.toUpperCase()}`}
           topic={pathInfo.topic}
           problems={problems}
+          loading={isLoadingProblems}
+          error={problemError}
         />
       </ParticipantLayout>
     </>
+  );
+}
+
+export default function Round1Page() {
+  return (
+    <AuthGuard requiredRole="PARTICIPANT">
+      <Round1PageContent />
+    </AuthGuard>
   );
 }
