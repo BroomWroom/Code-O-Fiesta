@@ -216,12 +216,20 @@ function Round1PageContent() {
                   ? 'Hard'
                   : 'Easy';
 
+            const backendStatus = String(problem.status ?? 'PENDING').toUpperCase();
+            const normalizedStatus: Round1Problem['status'] =
+              backendStatus === 'SOLVED'
+                ? 'solved'
+                : backendStatus === 'IN_PROGRESS' || backendStatus === 'FAILED'
+                  ? 'attempted'
+                  : 'available';
+
             return {
               id,
               title: problem.title ?? 'Untitled Problem',
               difficulty: normalizedDifficulty,
               maxScore: typeof problem.points === 'number' ? problem.points : 50,
-              status: 'available',
+              status: normalizedStatus,
             };
           })
           .filter((problem): problem is Round1Problem => !!problem);
