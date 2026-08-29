@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed:round1": "node --env-file=.env.local --import tsx scripts/seed-round1.ts",
-    "seed:round3": "node --env-file=.env.local --import tsx scripts/seed-round3.ts"
+    "seed:round3": "node --env-file=.env.local --import tsx scripts/seed-round3.ts",
+    "round1:active": "node --env-file=.env.local --import tsx scripts/set-round1-active.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

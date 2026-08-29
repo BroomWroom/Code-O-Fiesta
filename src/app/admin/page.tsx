@@ -10,6 +10,7 @@ import AdminRoundStatus from '@/components/admin/AdminRoundStatus';
 import AdminTeamTable from '@/components/admin/AdminTeamTable';
 import AdminSubmissionTable from '@/components/admin/AdminSubmissionTable';
 import AdminLeaderboard from '@/components/admin/AdminLeaderboard';
+import AdminNav from '@/components/admin/AdminNav';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import { adminService } from '@/services/admin';

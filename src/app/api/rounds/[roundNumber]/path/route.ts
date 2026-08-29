@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Types } from 'mongoose';
 import connectDB from '@/lib/db';
+import Problem from '@/models/Problem';
 import TeamRound from '@/models/TeamRound';
 import { validateRound1Path, PathValidationError } from '@/app/api/_validators/problem';
+import { TeamRoundStatus } from '@/constants/event';
 import {
   getAuthenticatedUser,
   getUserTeam,
@@ -99,9 +101,35 @@ export async function POST(
 
     await connectDB();
 
-    const teamRound = await TeamRound.findOne({ teamId, roundId });
+    let teamRound = await TeamRound.findOne({ teamId, roundId });
     if (!teamRound) {
-      return NextResponse.json({ error: 'TeamRound record not found for this team' }, { status: 404 });
+      const now = new Date();
+      const durationSeconds = (round as any).durationSeconds || 3600;
+      const endsAt = new Date(now.getTime() + durationSeconds * 1000);
+      try {
+        teamRound = await TeamRound.create({
+          teamId,
+          roundId,
+          status: TeamRoundStatus.IN_PROGRESS,
+          startedAt: now,
+          endsAt,
+          score: 0,
+        });
+      } catch (createErr: any) {
+        if (createErr.code === 11000) {
+          teamRound = await TeamRound.findOne({ teamId, roundId });
+          if (!teamRound) throw createErr;
+        } else {
+          throw createErr;
+        }
+      }
+    } else if (teamRound.status === TeamRoundStatus.NOT_STARTED) {
+      teamRound.set('status', TeamRoundStatus.IN_PROGRESS);
+      if (!teamRound.startedAt) teamRound.set('startedAt', new Date());
+      if (!teamRound.endsAt) {
+        const durationSeconds = (round as any).durationSeconds || 3600;
+        teamRound.set('endsAt', new Date(Date.now() + durationSeconds * 1000));
+      }
     }
 
     if (teamRound.round1?.selectedPath) {
@@ -127,10 +155,19 @@ export async function POST(
 
     const topic = PATH_TO_TOPIC[selectedPath];
 
-    const problems = await selectProblemsForTopic(topic, 3);
+    let problems = await selectProblemsForTopic(topic, 3);
     if (problems.length < 3) {
+      const existingIds = problems.map((p: any) => p._id);
+      const fallbackProblems = await Problem.aggregate([
+        { $match: { roundNumber: 1, isActive: true, _id: { $nin: existingIds } } },
+        { $sample: { size: 3 - problems.length } },
+      ]);
+      problems = [...problems, ...fallbackProblems];
+    }
+
+    if (problems.length === 0) {
       return NextResponse.json(
-        { error: 'Not enough problems available for the selected topic. Please contact an admin.' },
+        { error: 'No problems available for Round 1. Please contact an admin.' },
         { status: 500 }
       );
     }
