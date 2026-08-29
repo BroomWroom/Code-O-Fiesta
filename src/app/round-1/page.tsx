@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import TopicReveal from '@/components/round1/TopicReveal';
 import Round1ProblemList, { Round1Problem } from '@/components/round1/Round1ProblemList';
@@ -130,7 +131,7 @@ function Round1Sidebar({
 }
 
 // ── Main page ────────────────────────────────────────────────────────────────
-export default function Round1Page() {
+function Round1PageContent() {
   const router = useRouter();
 
   // In real app these come from team state / API
@@ -222,5 +223,13 @@ export default function Round1Page() {
         />
       </ParticipantLayout>
     </>
+  );
+}
+
+export default function Round1Page() {
+  return (
+    <AuthGuard requiredRole="PARTICIPANT">
+      <Round1PageContent />
+    </AuthGuard>
   );
 }

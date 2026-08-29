@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import TeamOverviewCard from '@/components/dashboard/TeamOverviewCard';
@@ -19,7 +20,7 @@ const ROUND_ROUTES: Record<0 | 1 | 2 | 3, string> = {
   3: '/round-3',
 };
 
-export default function DashboardPage() {
+function DashboardContent() {
   const eventState = useEventState();
   const { loading, error, refresh, currentRound, teamScore, eventStatus } = eventState;
 
@@ -166,5 +167,13 @@ export default function DashboardPage() {
         </Link>
       </div>
     </ParticipantLayout>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AuthGuard requiredRole="PARTICIPANT">
+      <DashboardContent />
+    </AuthGuard>
   );
 }
