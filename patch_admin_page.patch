@@ -1,0 +1,13 @@
+--- src/app/admin/page.tsx
++++ src/app/admin/page.tsx
+@@ -194,5 +194,9 @@
+ }
+ 
+ export default function AdminPage() {
+-  return <AdminContent />;
++  return (
++    <AuthGuard requiredRole="ADMIN">
++      <AdminContent />
++    </AuthGuard>
++  );
+ }
