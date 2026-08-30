@@ -1,5 +1,5 @@
-'use client';
 import AdminNav from '@/components/admin/AdminNav';
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import AuthGuard from '@/app/guards/AuthGuard';
@@ -7,7 +7,6 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import AdminLeaderboard from '@/components/admin/AdminLeaderboard';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
-import { leaderboardService } from '@/services/leaderboard';
 
 export default function LeaderboardPage() {
   return (
@@ -24,8 +23,17 @@ function LeaderboardContent() {
 
   const fetchLeaderboard = async () => {
     try {
-      const data = await leaderboardService.getLeaderboard();
-      setStandings(data);
+      const res = await fetch('/api/admin/leaderboard', {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch leaderboard');
+      }
+      const data = await res.json();
+      setStandings(data || []);
+      setError(null);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'An error occurred');
