@@ -61,9 +61,9 @@ endsAt: {
       },
       round2: {
         questionCount: Number,
-        member1Seconds: Number,
-        member2Seconds: Number,
-        overallDurationSeconds: Number,
+        member1DurationSeconds: Number,
+        handoverDurationSeconds: Number,
+        member2DurationSeconds: Number,
       },
       round3: {
         basePoints: Number,

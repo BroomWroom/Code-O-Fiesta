@@ -1,4 +1,5 @@
 // Client-side local storage mock for organizer settings and team states
+import { apiCall } from '@/lib/api';
 const DEFAULT_ROUNDS = [
   {
     roundNumber: 1,
@@ -211,6 +212,15 @@ function saveLocalState(state: any) {
 }
 
 export const adminService = {
+  getRound2Config: async (): Promise<{ totalDurationSeconds: number; member1DurationSeconds: number; handoverDurationSeconds: number; member2DurationSeconds: number }> =>
+    apiCall('/api/admin/rounds/2/config'),
+
+  updateRound2Config: async (config: { totalDurationSeconds: number; member1DurationSeconds: number; handoverDurationSeconds: number; member2DurationSeconds: number }) =>
+    apiCall('/api/admin/rounds/2/config', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    }),
   getAdminState: async () => {
     const state = getLocalState();
     return {

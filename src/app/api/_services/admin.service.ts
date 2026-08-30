@@ -59,9 +59,10 @@ export async function startRoundGlobally(roundNumber: number) {
   round.status = RoundStatus.ACTIVE;
   await round.save();
 
+  const now = new Date();
   await TeamRound.updateMany(
     { roundId: round._id, status: TeamRoundStatus.NOT_STARTED },
-    { status: TeamRoundStatus.IN_PROGRESS, startedAt: new Date() }
+    { status: TeamRoundStatus.IN_PROGRESS, startedAt: now, endsAt: new Date(now.getTime() + round.durationSeconds * 1000) }
   );
   
   return round;

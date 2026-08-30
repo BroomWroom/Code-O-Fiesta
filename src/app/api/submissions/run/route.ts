@@ -2,13 +2,18 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Problem from '@/models/Problem';
 import { executeTestCases, calculateVerdict, ExecutionMode } from '../../_services/judge.service';
+import { roundService } from '@/app/api/_services/round.service';
 
 export async function POST(request: Request) {
   const t0 = performance.now();
   
   try {
     const body = await request.json();
-    const { code, language, customInput, problemId, mode = 'custom' } = body;
+    const { code, language, customInput, problemId, mode = 'custom', roundNumber } = body;
+    if (roundNumber === 2) {
+      const actor = await roundService.resolveActor(request);
+      await roundService.assertCanSubmit({ roundNumber: 2, actor }, problemId);
+    }
     const tParsed = performance.now();
 
     let cpuTimeLimit = 2.0;
