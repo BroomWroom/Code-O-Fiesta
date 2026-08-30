@@ -160,8 +160,17 @@ function timing(
   round: RoundDoc,
   teamRound: TeamRoundInstance,
 ): Timing {
+  // Mongoose auto-vivifies this inline-object schema path into an
+  // always-truthy (but field-empty) object on every document hydration, so
+  // checking `configSnapshot`'s truthiness never falls through to the
+  // defaults below — it must be checked for an actual persisted value.
+  const snapshot = teamRound.round2?.configSnapshot;
+  if (snapshot && typeof snapshot.member1DurationSeconds === 'number') {
+    return snapshot as Timing;
+  }
+
   return (
-    teamRound.round2?.configSnapshot ?? {
+    {
       member1DurationSeconds:
         round.configuration?.round2?.member1DurationSeconds ??
         defaults.member1DurationSeconds,
