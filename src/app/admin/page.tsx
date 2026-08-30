@@ -207,9 +207,5 @@ function AdminContent() {
 }
 
 export default function AdminPage() {
-  return (
-    <AuthGuard requiredRole="ADMIN">
-      <AdminContent />
-    </AuthGuard>
-  );
+  return <AdminContent />;
 }
