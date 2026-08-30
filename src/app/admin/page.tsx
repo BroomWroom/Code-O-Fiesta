@@ -11,6 +11,7 @@ import AdminTeamTable from '@/components/admin/AdminTeamTable';
 import AdminSubmissionTable from '@/components/admin/AdminSubmissionTable';
 import AdminLeaderboard from '@/components/admin/AdminLeaderboard';
 import AdminNav from '@/components/admin/AdminNav';
+import Round2ConfigPanel from '@/components/admin/Round2ConfigPanel';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import { adminService } from '@/services/admin';
@@ -202,6 +203,8 @@ function AdminContent() {
           activeTeamsCount={activeTeamsCount}
           onAdjustTime={handleAdjustTime}
         />
+
+        <Round2ConfigPanel />
 
         {/* Main interactive grids */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
