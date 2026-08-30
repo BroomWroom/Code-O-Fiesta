@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
-import Maze from '@/components/round1/Maze';
+import Path from '@/components/round1/Path';
 import { problemsService } from '@/services/problems';
 
 // Right sidebar content matching the screenshot
@@ -20,7 +20,7 @@ function Round1Overview() {
             <span className="text-purple-400">📋</span>
             <div>
               <div className="text-slate-400 text-xs">Round Name</div>
-              <div className="text-white font-medium">The Maze of Fate</div>
+              <div className="text-white font-medium">The Path of Fate</div>
             </div>
           </li>
           <li className="flex items-center gap-3">
@@ -121,7 +121,7 @@ const PATH_ID_TO_NAME: Record<number, string> = {
   4: 'STAR',
 };
 
-export default function Round1MazePage() {
+export default function Round1PathPage() {
   const router = useRouter();
   // null = still checking, false = not locked, true = locked (redirect pending)
   const [checking, setChecking] = useState(true);
@@ -179,10 +179,10 @@ export default function Round1MazePage() {
       <div className="mb-4 text-xs text-slate-500 font-mono">
         Dashboard <span className="mx-1.5 text-slate-600">›</span>
         Round 1 <span className="mx-1.5 text-slate-600">›</span>
-        <span className="text-purple-400">Maze of Fate</span>
+        <span className="text-purple-400">Path of Fate</span>
       </div>
 
-      <Maze onPathConfirmed={handlePathConfirmed} />
+      <Path onPathConfirmed={handlePathConfirmed} />
     </ParticipantLayout>
   );
 }

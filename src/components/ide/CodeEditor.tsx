@@ -99,24 +99,12 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
     applyDecorations();
   }, [violations]);
 
-  // Map supported languages to Monaco languages
-  const getMonacoLanguage = (lang: SupportedLanguage) => {
-    switch (lang) {
-      case 'cpp':
-        return 'cpp';
-      case 'c':
-        return 'c';
-      case 'go':
-        return 'go';
-      case 'python':
-        return 'python';
-      case 'java':
-        return 'java';
-      case 'javascript':
-        return 'javascript';
-      default:
-        return 'cpp';
-    }
+  const MONACO_LANGUAGE_MAP: Record<SupportedLanguage, string> = {
+    c: 'c',
+    cpp: 'cpp',
+    java: 'java',
+    python: 'python',
+    go: 'go',
   };
 
   return (
@@ -138,7 +126,7 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
       `}} />
       <Editor
         height="100%"
-        language={getMonacoLanguage(language)}
+        language={MONACO_LANGUAGE_MAP[language]}
         value={value}
         onChange={(val) => onChange(val || '')}
         theme="fiesta-dark"

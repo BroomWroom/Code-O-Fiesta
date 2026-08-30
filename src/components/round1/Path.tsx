@@ -11,11 +11,11 @@ const PATHS: { id: number; shape: ShapeType }[] = [
   { id: 4, shape: 'star' },
 ];
 
-interface MazeProps {
+interface PathProps {
   onPathConfirmed?: (pathId: number) => void;
 }
 
-export default function Maze({ onPathConfirmed }: MazeProps) {
+export default function Path({ onPathConfirmed }: PathProps) {
   const [selectedPath, setSelectedPath] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -42,7 +42,7 @@ export default function Maze({ onPathConfirmed }: MazeProps) {
               ROUND 1
             </div>
             <h1 className="text-3xl lg:text-4xl font-bold text-white tracking-tight mb-3">
-              THE MAZE OF FATE
+              THE PATH OF FATE
             </h1>
             <p className="text-sm text-slate-300 max-w-xl leading-relaxed">
               Four mysterious paths lie ahead. Each path leads to a different domain.

@@ -54,7 +54,7 @@ function Round1Sidebar({
             <span className="text-purple-400">📋</span>
             <div>
               <div className="text-slate-400 text-xs">Round Name</div>
-              <div className="text-white font-medium">The Maze of Fate</div>
+              <div className="text-white font-medium">The Path of Fate</div>
             </div>
           </li>
           <li className="flex items-center gap-3">
@@ -261,7 +261,7 @@ function Round1PageContent() {
             ROUND 1
           </div>
           <h1 className="text-2xl lg:text-3xl font-bold text-white">
-            The Maze of Fate
+            The Path of Fate
           </h1>
         </div>
 

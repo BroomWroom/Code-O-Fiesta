@@ -23,8 +23,8 @@ export default function ProblemNavigation({
   // Only hidden for Round 2 (Relay mode)
   if (roundNumber === 2) return null;
 
-  const dashboardHref = roundNumber === 3 ? '/round-3' : '/round-1/maze';
-  const dashboardLabel = roundNumber === 3 ? 'All Problems (Round 3 Dashboard)' : 'All Problems (Maze Dashboard)';
+  const dashboardHref = roundNumber === 3 ? '/round-3' : '/round-1/path';
+  const dashboardLabel = roundNumber === 3 ? 'All Problems (Round 3 Dashboard)' : 'All Problems (Path Dashboard)';
 
   return (
     <div className="flex flex-col gap-3 px-4 py-3 border-t border-[var(--border)] bg-[#080814] select-none font-mono">

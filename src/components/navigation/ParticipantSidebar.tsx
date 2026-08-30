@@ -36,8 +36,8 @@ export default function ParticipantSidebar({ className = '', onCloseMobile }: Pa
     {
       id: 'round-1',
       label: 'ROUND 1',
-      sublabel: 'Maze of Fate',
-      href: '/round-1/maze',
+      sublabel: 'Path of Fate',
+      href: '/round-1/path',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2 1m0 0l-2-1m2 1v2.5M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1m2 1l2-1m-2 1v-2.5M18 18l-2-1m2 1l2-1m-2 1v-2.5" />
@@ -66,16 +66,7 @@ export default function ParticipantSidebar({ className = '', onCloseMobile }: Pa
         </svg>
       ),
     },
-    {
-      id: 'leaderboard',
-      label: 'LEADERBOARD',
-      href: '/leaderboard',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-    },
+
     {
       id: 'results',
       label: 'RESULTS',

@@ -1,4 +1,4 @@
-export type SupportedLanguage = 'cpp' | 'python' | 'java' | 'javascript' | 'c' | 'go';
+export type SupportedLanguage = 'c' | 'cpp' | 'java' | 'python' | 'go';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type IDEMode = 'standard' | 'relay' | 'constraint';
 
