@@ -6,10 +6,61 @@ import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import RelayInstructions from '@/components/round2/RelayInstructions';
 import { problemsService } from '@/services/problems';
+import { useTeamResults } from '@/hooks/useTeamResults';
+
+// ── Right sidebar ────────────────────────────────────────────────────────────
+function Round2Sidebar({ roundScore }: { roundScore: number }) {
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="rounded-2xl border border-[#1e224d] bg-[#0d0e24] p-5">
+        <h3 className="text-xs font-mono tracking-widest text-purple-400 uppercase mb-4">
+          ROUND 2 OVERVIEW
+        </h3>
+        <ul className="space-y-3 text-sm">
+          <li className="flex items-center gap-3">
+            <span className="text-purple-400">📋</span>
+            <div>
+              <div className="text-slate-400 text-xs">Round Name</div>
+              <div className="text-white font-medium">Blind Relay</div>
+            </div>
+          </li>
+          <li className="flex items-center gap-3">
+            <span className="text-cyan-400">⏱</span>
+            <div>
+              <div className="text-slate-400 text-xs">Duration</div>
+              <div className="text-white font-medium">30 Minutes</div>
+            </div>
+          </li>
+          <li className="flex items-center gap-3">
+            <span className="text-pink-400">↔</span>
+            <div>
+              <div className="text-slate-400 text-xs">Format</div>
+              <div className="text-white font-medium">Team Relay</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      {/* Live score */}
+      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 flex items-center justify-between">
+        <div>
+          <h3 className="text-xs font-mono tracking-widest text-emerald-400 uppercase mb-1">
+            Your Score
+          </h3>
+          <p className="text-[11px] text-slate-400">This round</p>
+        </div>
+        <div className="text-2xl font-mono font-extrabold text-white">
+          {roundScore} <span className="text-sm text-slate-400">PTS</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Round2PageContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { getRoundScore } = useTeamResults();
 
   const handleEnterRound = async () => {
     try {
@@ -43,7 +94,7 @@ function Round2PageContent() {
   };
 
   return (
-    <ParticipantLayout>
+    <ParticipantLayout rightSidebar={<Round2Sidebar roundScore={getRoundScore(2)} />}>
       <style>{`
         a[href="/round-2"] > span:last-child {
           background: rgba(16, 185, 129, 0.2) !important;
