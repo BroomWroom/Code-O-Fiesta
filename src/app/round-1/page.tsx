@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import TopicReveal from '@/components/round1/TopicReveal';
 import Round1ProblemList, { Round1Problem } from '@/components/round1/Round1ProblemList';
 import { ShapeType } from '@/components/round1/ShapeCard';
 import { problemsService } from '@/services/problems';
+import { useTeamResults } from '@/hooks/useTeamResults';
 
 const PATH_TOPICS: Record<number, { shape: ShapeType; topic: string; description: string }> = {
   1: {
@@ -37,10 +37,12 @@ function Round1Sidebar({
   topic,
   solvedCount,
   total,
+  roundScore,
 }: {
   topic: string;
   solvedCount: number;
   total: number;
+  roundScore: number;
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -88,6 +90,19 @@ function Round1Sidebar({
         </ul>
       </div>
 
+      {/* Live score */}
+      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 flex items-center justify-between">
+        <div>
+          <h3 className="text-xs font-mono tracking-widest text-emerald-400 uppercase mb-1">
+            Your Score
+          </h3>
+          <p className="text-[11px] text-slate-400">This round</p>
+        </div>
+        <div className="text-2xl font-mono font-extrabold text-white">
+          {roundScore} <span className="text-sm text-slate-400">PTS</span>
+        </div>
+      </div>
+
       {/* Selected domain */}
       <div className="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-5">
         <h3 className="text-xs font-mono tracking-widest text-purple-400 uppercase mb-2">
@@ -126,6 +141,7 @@ function Round1Sidebar({
 // ── Main page ────────────────────────────────────────────────────────────────
 function Round1PageContent() {
   const router = useRouter();
+  const { getRoundScore } = useTeamResults();
 
   const [selectedPath, setSelectedPath] = useState<number | null>(null);
   const [showReveal, setShowReveal] = useState(false);
@@ -144,7 +160,7 @@ function Round1PageContent() {
         setShowReveal(true);
       }
     } else {
-      router.replace('/round-1/maze');
+      router.replace('/round-1/path');
     }
   }, [router]);
 
@@ -248,6 +264,7 @@ function Round1PageContent() {
             topic={pathInfo.topic}
             solvedCount={solvedCount}
             total={problems.length}
+            roundScore={getRoundScore(1)}
           />
         }
       >
@@ -278,9 +295,5 @@ function Round1PageContent() {
 }
 
 export default function Round1Page() {
-  return (
-    <AuthGuard requiredRole="PARTICIPANT">
-      <Round1PageContent />
-    </AuthGuard>
-  );
+  return <Round1PageContent />;
 }

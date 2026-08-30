@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Problem from '@/models/Problem';
+import Round from '@/models/Round';
+import { RoundStatus } from '@/constants/event';
 import { executeTestCases, calculateVerdict, ExecutionMode } from '../../_services/judge.service';
 import { roundService } from '@/app/api/_services/round.service';
 
@@ -34,9 +36,17 @@ export async function POST(request: Request) {
         const problem = await Problem.findById(problemId);
         tDbEnd = performance.now();
         if (problem) {
+          const round = await Round.findOne({ roundNumber: problem.roundNumber }).select('status').lean();
+          if (round?.status !== RoundStatus.ACTIVE) {
+            return NextResponse.json(
+              { error: `Round ${problem.roundNumber} is not currently active` },
+              { status: 403 },
+            );
+          }
+
           cpuTimeLimit = problem.cpuTimeLimit || 2.0;
           memoryLimit = problem.memoryLimit || 128000;
-          
+
           if (mode === 'examples') {
             // Priority: visibleTestCases then examples
             const visible = problem.visibleTestCases || [];

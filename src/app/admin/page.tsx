@@ -81,6 +81,26 @@ function AdminContent() {
     }
   };
 
+  const handlePauseRound = async (roundNumber: number) => {
+    try {
+      const res = await adminService.pauseRound(roundNumber);
+      if (res.error) alert(res.error);
+      await fetchAdminData(false);
+    } catch (err) {
+      console.error('Error pausing round:', err);
+    }
+  };
+
+  const handleResumeRound = async (roundNumber: number) => {
+    try {
+      const res = await adminService.resumeRound(roundNumber);
+      if (res.error) alert(res.error);
+      await fetchAdminData(false);
+    } catch (err) {
+      console.error('Error resuming round:', err);
+    }
+  };
+
   const handleCompleteRound = async (roundNumber: number) => {
     try {
       const res = await adminService.completeRound(roundNumber);
@@ -121,8 +141,8 @@ function AdminContent() {
     }
   };
 
-  // Get active round detail
-  const activeRound = rounds.find((r) => r.status === 'ACTIVE') || null;
+  // Get active (or paused) round detail
+  const activeRound = rounds.find((r) => r.status === 'ACTIVE' || r.status === 'PAUSED') || null;
   const activeTeamsCount = teams.filter((t) => t.status === 'ACTIVE').length;
 
   if (loading) {
@@ -172,6 +192,8 @@ function AdminContent() {
         <AdminEventControls
           rounds={rounds}
           onStartRound={handleStartRound}
+          onPauseRound={handlePauseRound}
+          onResumeRound={handleResumeRound}
           onCompleteRound={handleCompleteRound}
         />
 
@@ -210,5 +232,9 @@ function AdminContent() {
 }
 
 export default function AdminPage() {
-  return <AdminContent />;
+  return (
+    <AuthGuard requiredRole="ADMIN">
+      <AdminContent />
+    </AuthGuard>
+  );
 }

@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     await requireAdmin(req);
     const leaderboard = await getLeaderboard(true);
     return successResponse(leaderboard);
-  } catch (error: any) {
-    return errorResponse(error.message, error.status || 500);
+  } catch (error) {
+    return errorResponse(error);
   }
 }

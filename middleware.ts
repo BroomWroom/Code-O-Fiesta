@@ -13,6 +13,7 @@ const secret = new TextEncoder().encode(secretKey);
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
   '/login',
+  '/admin/login',
   '/api/auth/login',
   '/api/auth/logout',
   '/',

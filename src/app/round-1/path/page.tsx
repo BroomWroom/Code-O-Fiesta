@@ -122,6 +122,10 @@ const PATH_ID_TO_NAME: Record<number, string> = {
 };
 
 export default function Round1PathPage() {
+  return <Round1PathContent />;
+}
+
+function Round1PathContent() {
   const router = useRouter();
   // null = still checking, false = not locked, true = locked (redirect pending)
   const [checking, setChecking] = useState(true);

@@ -1,4 +1,5 @@
 'use client';
+import AuthGuard from '@/app/guards/AuthGuard';
 
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -67,7 +68,7 @@ const defaultProblem: ProblemData = {
   isActive: true,
 };
 
-export default function AdminQuestionsPage() {
+function AdminQuestionsContent() {
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -641,5 +642,13 @@ export default function AdminQuestionsPage() {
         </div>
       )}
     </AdminLayout>
+  );
+}
+
+export default function AdminQuestionsPage() {
+  return (
+    <AuthGuard requiredRole="ADMIN">
+      <AdminQuestionsContent />
+    </AuthGuard>
   );
 }

@@ -48,6 +48,11 @@ endsAt: {
   type: Date,
   default: null,
 },
+
+pausedAt: {
+  type: Date,
+  default: null,
+},
     configuration: {
       problemCount: {
         type: Number,
