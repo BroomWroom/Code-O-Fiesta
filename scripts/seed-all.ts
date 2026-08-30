@@ -435,6 +435,11 @@ async function seedSampleSubmissions(teamId: mongoose.Types.ObjectId, roundId: m
     javascript: 'console.log("ok")',
   };
 
+  const demoUser = await User.findOne({ email: DEMO_EMAIL, teamMember: TeamMember.MEMBER_1 });
+  if (!demoUser) {
+    throw new Error(`No user found with email ${DEMO_EMAIL} and teamMember ${TeamMember.MEMBER_1}`);
+  }
+
   for (const [idx, problem] of problems.entries()) {
     const verdict = idx === 0 ? SubmissionVerdict.ACCEPTED : SubmissionVerdict.WRONG_ANSWER;
 
@@ -448,7 +453,7 @@ async function seedSampleSubmissions(teamId: mongoose.Types.ObjectId, roundId: m
       {
         $set: {
           teamId,
-          userId: (await User.findOne({ email: DEMO_EMAIL, teamMember: TeamMember.MEMBER_1 }))._id,
+          userId: demoUser._id,
           roundId,
           problemId: problem._id,
           sourceCode: sampleCodeByLanguage[problem.allowedLanguages?.[0] ?? 'python'] ?? 'print("ok")',
