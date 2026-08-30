@@ -11,6 +11,7 @@ import EventProgress from '@/components/event/EventProgress';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import { useEventState } from '@/hooks/useEventState';
+import { useTeamResults } from '@/hooks/useTeamResults';
 import { buildEventProgressSteps } from '@/lib/eventProgress';
 
 const ROUND_ROUTES: Record<0 | 1 | 2 | 3, string> = {
@@ -22,7 +23,8 @@ const ROUND_ROUTES: Record<0 | 1 | 2 | 3, string> = {
 
 function DashboardContent() {
   const eventState = useEventState();
-  const { loading, error, refresh, currentRound, teamScore, eventStatus } = eventState;
+  const { loading, error, refresh, currentRound, eventStatus } = eventState;
+  const { totalScore } = useTeamResults();
 
   if (loading) {
     return (
@@ -130,7 +132,7 @@ function DashboardContent() {
 
               <SummaryCard
                 title="CURRENT SCORE"
-                value={`${teamScore} PTS`}
+                value={`${totalScore} PTS`}
                 accentColor="purple"
                 icon={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -61,7 +61,6 @@ export async function POST(request: Request) {
     let submissionId = `sub_${Date.now()}`;
     let tokens: string[] = [];
     let problemDetails: any = null;
-    let roundId: string | undefined;
 
     // ── AST Analysis (Round 3 only) ────────────────────────────────────────
     let astResult: any = undefined;
@@ -76,19 +75,21 @@ export async function POST(request: Request) {
     // ── DB Submission ──────────────────────────────────────────────────────
     await connectDB();
 
-    // Resolve roundId from the active round
+    // Resolve roundId from the active round — a team must not be able to
+    // submit (and get scored) for a round that isn't the currently active one.
     const round = await Round.findOne({
       roundNumber: roundNumber ?? 1,
       status: RoundStatus.ACTIVE,
     }).lean();
 
-    if (round) {
-      roundId = (round as any)._id.toString();
-    } else {
-      // Fall back to any round matching the number (e.g. if round is COMPLETED)
-      const anyRound = await Round.findOne({ roundNumber: roundNumber ?? 1 }).lean();
-      if (anyRound) roundId = (anyRound as any)._id.toString();
+    if (!round) {
+      return NextResponse.json(
+        { error: `Round ${roundNumber ?? 1} is not currently active` },
+        { status: 403 },
+      );
     }
+
+    const roundId: string = (round as any)._id.toString();
 
     // Fetch test cases
     if (Types.ObjectId.isValid(problemId)) {

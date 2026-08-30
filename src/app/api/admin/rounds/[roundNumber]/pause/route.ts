@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { completeRoundGlobally } from '@/app/api/_services/admin.service';
+import { pauseRoundGlobally } from '@/app/api/_services/admin.service';
 import { successResponse, errorResponse } from '@/app/api/_lib/response';
 import { requireAdmin } from '@/app/api/_lib/authorization';
 
@@ -14,7 +14,7 @@ export async function POST(
     if (isNaN(roundNumber)) {
       return NextResponse.json({ message: 'Invalid round number' }, { status: 400 });
     }
-    const result = await completeRoundGlobally(roundNumber);
+    const result = await pauseRoundGlobally(roundNumber);
     return successResponse(result);
   } catch (error) {
     return errorResponse(error);

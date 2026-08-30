@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTeamResults } from '@/hooks/useTeamResults';
 
 export interface TopBarProps {
   className?: string;
@@ -9,6 +10,7 @@ export interface TopBarProps {
 
 export default function TopBar({ className = '', onMenuClick }: TopBarProps) {
   const [timeString, setTimeString] = useState<string>('10:24:36 PM');
+  const { totalScore, loading: scoreLoading } = useTeamResults();
 
   useEffect(() => {
     const updateTime = () => {
@@ -96,7 +98,7 @@ export default function TopBar({ className = '', onMenuClick }: TopBarProps) {
             SCORE
           </span>
           <span className="text-sm font-mono font-black text-purple-200">
-            120 PTS
+            {scoreLoading ? '—' : `${totalScore} PTS`}
           </span>
         </div>
 

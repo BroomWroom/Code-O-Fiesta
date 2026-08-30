@@ -24,6 +24,7 @@ export type TeamStatus = (typeof TeamStatus)[keyof typeof TeamStatus];
 export const RoundStatus = {
   UPCOMING: 'UPCOMING',
   ACTIVE: 'ACTIVE',
+  PAUSED: 'PAUSED',
   COMPLETED: 'COMPLETED',
 } as const;
 

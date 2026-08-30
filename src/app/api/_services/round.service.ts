@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { Round2Phase, TeamMember, TeamRoundStatus } from '@/constants/event';
+import { Round2Phase, RoundStatus, TeamMember, TeamRoundStatus } from '@/constants/event';
 import connectDB from '@/lib/db';
 import Problem, { type ProblemDocument } from '@/models/Problem';
 import Round from '@/models/Round';
@@ -55,6 +55,7 @@ type TeamRoundInstance = {
 
 type RoundDoc = {
   _id: unknown;
+  status?: RoundStatus;
   configuration?: {
     round2?: {
       questionCount?: number;
@@ -247,6 +248,16 @@ async function getOrCreateTeamRound(
     );
   }
   const roundDoc = fetchedRound as unknown as RoundDoc;
+
+  // Global source of truth: only the admin-activated round may serve or
+  // accept round-scoped data, regardless of this team's own progress status.
+  if (roundDoc.status !== RoundStatus.ACTIVE) {
+    throw new RoundRequestError(
+      'Round 2 is not currently active.',
+      403,
+      'ROUND_NOT_ACTIVE',
+    );
+  }
 
   let teamRound = (await TeamRound.findOne({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

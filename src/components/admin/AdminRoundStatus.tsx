@@ -4,8 +4,10 @@ interface ActiveRoundInfo {
   roundNumber: number;
   name: string;
   durationSeconds: number;
+  status?: string;
   startedAt?: string;
   endsAt?: string;
+  pausedAt?: string;
 }
 
 interface AdminRoundStatusProps {
@@ -22,12 +24,20 @@ export default function AdminRoundStatus({
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [inputMinutes, setInputMinutes] = useState<string>('');
 
+  const isPaused = activeRound?.status === 'PAUSED';
+
   useEffect(() => {
     if (!activeRound) return;
 
     const updateTimer = () => {
+      // While paused, the round's endsAt is frozen server-side until resume,
+      // so ticking against it here would show a misleading falling countdown.
+      const referenceTime = isPaused && activeRound.pausedAt
+        ? new Date(activeRound.pausedAt).getTime()
+        : Date.now();
+
       if (activeRound.endsAt) {
-        const remaining = Math.max(0, Math.floor((new Date(activeRound.endsAt).getTime() - Date.now()) / 1000));
+        const remaining = Math.max(0, Math.floor((new Date(activeRound.endsAt).getTime() - referenceTime) / 1000));
         setTimeLeft(remaining);
       } else {
         setTimeLeft(activeRound.durationSeconds);
@@ -35,10 +45,11 @@ export default function AdminRoundStatus({
     };
 
     updateTimer();
-    const interval = setInterval(updateTimer, 1000);
+    if (isPaused) return;
 
+    const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [activeRound]);
+  }, [activeRound, isPaused]);
 
   if (!activeRound) {
     return (
@@ -88,12 +99,18 @@ export default function AdminRoundStatus({
             ROUND 0{activeRound.roundNumber} RUNTIME STATUS
           </span>
           <div className="flex items-baseline gap-3">
-            <h2 className="text-3xl sm:text-4xl font-mono font-black text-cyan-400 tracking-wider">
+            <h2 className={`text-3xl sm:text-4xl font-mono font-black tracking-wider ${isPaused ? 'text-amber-400' : 'text-cyan-400'}`}>
               {formatTime(timeLeft)}
             </h2>
             <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase">
               remaining of {Math.floor(activeRound.durationSeconds / 60)} min
             </span>
+            {isPaused && (
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold rounded-full border bg-amber-500/10 border-amber-500/30 text-amber-400 px-2.5 py-1">
+                <span className="rounded-full w-1.5 h-1.5 bg-amber-400" />
+                PAUSED
+              </span>
+            )}
           </div>
 
           {/* Progress bar */}

@@ -1,4 +1,9 @@
-// Client-side local storage mock for organizer settings and team states
+import { apiCall } from '@/lib/api';
+
+// Team/submission data below is still a client-side local storage mock (not
+// wired to the real backend) — round control (start/pause/resume/complete/
+// override) now calls the real /api/admin/rounds/* endpoints so it actually
+// affects what participants see.
 const DEFAULT_ROUNDS = [
   {
     roundNumber: 1,
@@ -212,11 +217,17 @@ function saveLocalState(state: any) {
 
 export const adminService = {
   getAdminState: async () => {
-    const state = getLocalState();
+    const rounds = await apiCall('/api/admin/rounds');
+    const activeOrPaused = rounds.find((r: any) => r.status === 'ACTIVE' || r.status === 'PAUSED');
+    const allCompleted = rounds.length > 0 && rounds.every((r: any) => r.status === 'COMPLETED');
+    const upcoming = rounds.find((r: any) => r.status === 'UPCOMING');
+
+    const status: 'waiting' | 'started' | 'ended' = allCompleted ? 'ended' : activeOrPaused ? 'started' : 'waiting';
+
     return {
-      status: state.status,
-      currentRound: state.currentRound,
-      rounds: state.rounds,
+      status,
+      currentRound: activeOrPaused?.roundNumber ?? upcoming?.roundNumber ?? rounds[rounds.length - 1]?.roundNumber ?? 1,
+      rounds,
     };
   },
 
@@ -231,94 +242,52 @@ export const adminService = {
   },
 
   startRound: async (roundNumber: number): Promise<any> => {
-    const state = getLocalState();
-    state.currentRound = roundNumber;
-    state.status = 'started';
-    
-    state.rounds = state.rounds.map((r: any) => {
-      if (r.roundNumber === roundNumber) {
-        return {
-          ...r,
-          status: 'ACTIVE',
-          startedAt: new Date().toISOString(),
-          endsAt: new Date(Date.now() + r.durationSeconds * 1000).toISOString(),
-        };
-      }
-      if (r.roundNumber < roundNumber) {
-        return { ...r, status: 'COMPLETED' };
-      }
-      return { ...r, status: 'UPCOMING' };
-    });
+    try {
+      const round = await apiCall(`/api/admin/rounds/${roundNumber}/start`, { method: 'POST' });
+      return { success: true, round };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Failed to start round' };
+    }
+  },
 
-    // Update active team progress statuses
-    state.teams = state.teams.map((team: any) => {
-      if (team.status !== 'DISQUALIFIED') {
-        const roundProgress = team.roundProgress.map((rp: any) => {
-          if (rp.roundNumber === roundNumber) {
-            return { ...rp, status: 'IN_PROGRESS' };
-          }
-          if (rp.roundNumber < roundNumber) {
-            return { ...rp, status: 'COMPLETED' };
-          }
-          return rp;
-        });
-        return { ...team, roundProgress };
-      }
-      return team;
-    });
+  pauseRound: async (roundNumber: number): Promise<any> => {
+    try {
+      const round = await apiCall(`/api/admin/rounds/${roundNumber}/pause`, { method: 'POST' });
+      return { success: true, round };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Failed to pause round' };
+    }
+  },
 
-    saveLocalState(state);
-    return { success: true };
+  resumeRound: async (roundNumber: number): Promise<any> => {
+    try {
+      const round = await apiCall(`/api/admin/rounds/${roundNumber}/resume`, { method: 'POST' });
+      return { success: true, round };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Failed to resume round' };
+    }
   },
 
   completeRound: async (roundNumber: number): Promise<any> => {
-    const state = getLocalState();
-    
-    state.rounds = state.rounds.map((r: any) => {
-      if (r.roundNumber === roundNumber) {
-        return { ...r, status: 'COMPLETED' };
-      }
-      return r;
-    });
-
-    // Check if all rounds are completed
-    const allDone = state.rounds.every((r: any) => r.status === 'COMPLETED');
-    if (allDone) {
-      state.status = 'ended';
+    try {
+      const round = await apiCall(`/api/admin/rounds/${roundNumber}/complete`, { method: 'POST' });
+      return { success: true, round };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Failed to complete round' };
     }
-
-    // Complete team rounds
-    state.teams = state.teams.map((team: any) => {
-      const roundProgress = team.roundProgress.map((rp: any) => {
-        if (rp.roundNumber === roundNumber && rp.status === 'IN_PROGRESS') {
-          return { ...rp, status: 'COMPLETED' };
-        }
-        return rp;
-      });
-      return { ...team, roundProgress };
-    });
-
-    saveLocalState(state);
-    return { success: true };
   },
 
   overrideRoundDuration: async (roundNumber: number, durationSeconds: number): Promise<any> => {
-    const state = getLocalState();
-    
-    state.rounds = state.rounds.map((r: any) => {
-      if (r.roundNumber === roundNumber) {
-        const started = r.startedAt ? new Date(r.startedAt).getTime() : Date.now();
-        return {
-          ...r,
-          durationSeconds,
-          endsAt: new Date(started + durationSeconds * 1000).toISOString(),
-        };
-      }
-      return r;
-    });
-
-    saveLocalState(state);
-    return { success: true };
+    try {
+      const round = await apiCall(`/api/admin/rounds/${roundNumber}/override`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ durationSeconds }),
+      });
+      return { success: true, round };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Failed to override round duration' };
+    }
   },
 
   overrideTeamScore: async (teamId: string, roundNumber: number, totalScore: number): Promise<any> => {

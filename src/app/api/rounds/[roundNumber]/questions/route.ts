@@ -49,9 +49,12 @@ export async function GET(
         return NextResponse.json({ error: 'No team found for this user' }, { status: 404 });
       }
 
-      const round = await Round.findOne({ roundNumber: 1 }).select('_id').lean();
+      const round = await Round.findOne({ roundNumber: 1 }).select('_id status').lean();
       if (!round) {
         return NextResponse.json({ error: 'Round 1 not found' }, { status: 404 });
+      }
+      if ((round as any).status !== RoundStatus.ACTIVE) {
+        return NextResponse.json({ error: 'Round 1 is not currently active' }, { status: 403 });
       }
 
       const teamRound = await TeamRound.findOne({
@@ -115,6 +118,9 @@ export async function GET(
       const round = await Round.findOne({ roundNumber: 3 }).lean();
       if (!round) {
         return NextResponse.json({ error: 'Round 3 not found' }, { status: 404 });
+      }
+      if ((round as any).status !== RoundStatus.ACTIVE) {
+        return NextResponse.json({ error: 'Round 3 is not currently active' }, { status: 403 });
       }
 
       const teamRound = await TeamRound.findOne({

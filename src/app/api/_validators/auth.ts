@@ -60,3 +60,49 @@ export function validateLoginInput(
     teamMember: teamMember as TeamMember,
   };
 }
+
+export type AdminLoginInput = {
+  email: string;
+  password: string;
+};
+
+export function validateAdminLoginInput(
+  body: unknown,
+): AdminLoginInput {
+  if (!body || typeof body !== 'object') {
+    throw new BadRequestError(
+      'Invalid request body',
+    );
+  }
+
+  const { email, password } =
+    body as Record<string, unknown>;
+
+  if (typeof email !== 'string' || !email.trim()) {
+    throw new BadRequestError(
+      'Email is required',
+    );
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const emailPattern =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailPattern.test(normalizedEmail)) {
+    throw new BadRequestError(
+      'Invalid email format',
+    );
+  }
+
+  if (typeof password !== 'string' || !password) {
+    throw new BadRequestError(
+      'Password is required',
+    );
+  }
+
+  return {
+    email: normalizedEmail,
+    password,
+  };
+}
