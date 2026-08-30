@@ -3,14 +3,32 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAllRoundsStatus } from '@/hooks/useRoundStatus';
+import { RoundStatus } from '@/constants/event';
 
 export interface ParticipantSidebarProps {
   className?: string;
   onCloseMobile?: () => void;
 }
 
+const ROUND_BADGE_STYLES: Record<string, string> = {
+  [RoundStatus.ACTIVE]: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+  [RoundStatus.PAUSED]: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+  [RoundStatus.COMPLETED]: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30',
+  [RoundStatus.UPCOMING]: 'bg-slate-800 text-slate-500 border border-transparent',
+};
+
+const ROUND_BADGE_LABELS: Record<string, string> = {
+  [RoundStatus.ACTIVE]: 'ACTIVE',
+  [RoundStatus.PAUSED]: 'PAUSED',
+  [RoundStatus.COMPLETED]: 'COMPLETED',
+  [RoundStatus.UPCOMING]: 'LOCKED',
+};
+
 export default function ParticipantSidebar({ className = '', onCloseMobile }: ParticipantSidebarProps) {
   const pathname = usePathname();
+  const { rounds } = useAllRoundsStatus();
+  const statusByRoundNumber = new Map(rounds.map((r) => [r.roundNumber, r.status]));
 
   const navItems = [
     {
@@ -128,15 +146,17 @@ export default function ParticipantSidebar({ className = '', onCloseMobile }: Pa
                   </div>
                 </div>
 
-                {item.id.startsWith('round') && (
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
-                    item.id === 'round-1'
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-slate-800 text-slate-500'
-                  }`}>
-                    {item.id === 'round-1' ? 'ACTIVE' : 'LOCKED'}
-                  </span>
-                )}
+                {item.id.startsWith('round-') && (() => {
+                  const roundNumber = Number(item.id.replace('round-', ''));
+                  const status = statusByRoundNumber.get(roundNumber) ?? RoundStatus.UPCOMING;
+                  return (
+                    <span
+                      className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${ROUND_BADGE_STYLES[status]}`}
+                    >
+                      {ROUND_BADGE_LABELS[status]}
+                    </span>
+                  );
+                })()}
               </Link>
             );
           })}

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import TopicReveal from '@/components/round1/TopicReveal';
 import Round1ProblemList, { Round1Problem } from '@/components/round1/Round1ProblemList';
@@ -296,9 +295,5 @@ function Round1PageContent() {
 }
 
 export default function Round1Page() {
-  return (
-    <AuthGuard requiredRole="PARTICIPANT">
-      <Round1PageContent />
-    </AuthGuard>
-  );
+  return <Round1PageContent />;
 }

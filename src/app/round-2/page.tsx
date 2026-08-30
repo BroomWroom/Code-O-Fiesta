@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import RelayInstructions from '@/components/round2/RelayInstructions';
 import { problemsService } from '@/services/problems';
@@ -163,10 +162,6 @@ function Round2PageContent() {
 }
 
 export default function Round2Page() {
-  return (
-    <AuthGuard requiredRole="PARTICIPANT">
-      <Round2PageContent />
-    </AuthGuard>
-  );
+  return <Round2PageContent />;
 }
 

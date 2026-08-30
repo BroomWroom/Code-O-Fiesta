@@ -10,12 +10,16 @@ interface RoundInfo {
 interface AdminEventControlsProps {
   rounds: RoundInfo[];
   onStartRound: (roundNumber: number) => void;
+  onPauseRound: (roundNumber: number) => void;
+  onResumeRound: (roundNumber: number) => void;
   onCompleteRound: (roundNumber: number) => void;
 }
 
 export default function AdminEventControls({
   rounds,
   onStartRound,
+  onPauseRound,
+  onResumeRound,
   onCompleteRound,
 }: AdminEventControlsProps) {
   return (
@@ -28,6 +32,7 @@ export default function AdminEventControls({
         {rounds.map((round) => {
           const isUpcoming = round.status === 'UPCOMING';
           const isActive = round.status === 'ACTIVE';
+          const isPaused = round.status === 'PAUSED';
           const isCompleted = round.status === 'COMPLETED';
 
           let statusColor = 'text-[var(--text-muted)]';
@@ -38,6 +43,10 @@ export default function AdminEventControls({
             statusColor = 'text-cyan-400 font-extrabold animate-pulse';
             borderStyle = 'border-cyan-500/40 ring-1 ring-cyan-500/10';
             statusLabel = 'ACTIVE NOW';
+          } else if (isPaused) {
+            statusColor = 'text-amber-400 font-extrabold';
+            borderStyle = 'border-amber-500/40 ring-1 ring-amber-500/10';
+            statusLabel = 'PAUSED';
           } else if (isCompleted) {
             statusColor = 'text-[var(--success)] font-bold';
             borderStyle = 'border-[var(--success)]/30';
@@ -75,12 +84,37 @@ export default function AdminEventControls({
                 )}
 
                 {isActive && (
-                  <button
-                    onClick={() => onCompleteRound(round.roundNumber)}
-                    className="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-[10px] font-mono font-extrabold uppercase tracking-wider cursor-pointer transition-colors"
-                  >
-                    COMPLETE ROUND ✓
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onPauseRound(round.roundNumber)}
+                      className="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded text-[10px] font-mono font-extrabold uppercase tracking-wider cursor-pointer transition-colors"
+                    >
+                      PAUSE ⏸
+                    </button>
+                    <button
+                      onClick={() => onCompleteRound(round.roundNumber)}
+                      className="flex-1 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-[10px] font-mono font-extrabold uppercase tracking-wider cursor-pointer transition-colors"
+                    >
+                      COMPLETE ✓
+                    </button>
+                  </div>
+                )}
+
+                {isPaused && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onResumeRound(round.roundNumber)}
+                      className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-mono font-extrabold uppercase tracking-wider cursor-pointer transition-colors"
+                    >
+                      RESUME ▶
+                    </button>
+                    <button
+                      onClick={() => onCompleteRound(round.roundNumber)}
+                      className="flex-1 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-[10px] font-mono font-extrabold uppercase tracking-wider cursor-pointer transition-colors"
+                    >
+                      COMPLETE ✓
+                    </button>
+                  </div>
                 )}
 
                 {isCompleted && (

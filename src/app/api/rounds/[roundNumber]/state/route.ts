@@ -5,6 +5,7 @@ import connectDB from '@/lib/db';
 import TeamRound from '@/models/TeamRound';
 import { requireAuthentication } from '@/app/api/_lib/authorization';
 import { getRound3, getRound3StateForTeam } from '@/app/api/_services/round3.service';
+import { RoundStatus } from '@/constants/event';
 
 import { roundErrorResponse, roundService } from '../../../_services/round.service';
 import { parseRound2Params } from '../../../_validators/round';
@@ -48,6 +49,9 @@ export async function GET(
         { status: 'NOT_STARTED', startedAt: null, endsAt: null, score: 0, problems: [], roundConfig: null },
         { status: 200 },
       );
+    }
+    if ((round as any).status !== RoundStatus.ACTIVE) {
+      return NextResponse.json({ error: 'Round 3 is not currently active' }, { status: 403 });
     }
 
     await connectDB();

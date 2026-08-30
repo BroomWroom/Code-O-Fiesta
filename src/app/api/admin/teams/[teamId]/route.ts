@@ -12,7 +12,7 @@ export async function GET(
     const resolvedParams = await params;
     const detail = await getTeamDetail(resolvedParams.teamId);
     return successResponse(detail);
-  } catch (error: any) {
-    return errorResponse(error.message, error.status || 500);
+  } catch (error) {
+    return errorResponse(error);
   }
 }

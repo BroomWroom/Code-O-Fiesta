@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import AuthGuard from '@/app/guards/AuthGuard';
 import ParticipantLayout from '@/components/layout/ParticipantLayout';
 import RoundTimer from '@/components/timer/RoundTimer';
 import { problemsService } from '@/services/problems';
@@ -531,9 +530,5 @@ function Round3PageContent() {
 }
 
 export default function Round3DashboardPage() {
-  return (
-    <AuthGuard requiredRole="PARTICIPANT">
-      <Round3PageContent />
-    </AuthGuard>
-  );
+  return <Round3PageContent />;
 }
