@@ -48,7 +48,13 @@ export default function Round2ProblemPage({ params }: PageProps) {
     try {
       const st = await problemsService.fetchRoundState(2);
       setRoundState(st);
+      setError(null);
     } catch (err) {
+      const message = err instanceof Error ? err.message : '';
+      // The round-2 layout's RoundGate already shows a dedicated screen when
+      // the round isn't active (upcoming/paused/completed) and will unmount
+      // this page shortly — don't flash a raw error here while it catches up.
+      if (/not currently active/i.test(message)) return;
       console.error(err);
       setError('Failed to fetch round state.');
     }
