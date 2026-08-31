@@ -560,9 +560,9 @@ async function getState(
     );
 
   const phaseTimerExpired =
-    r2.phaseEndsAt !== null && 
-    r2.phaseEndsAt !== undefined && 
-    now >= r2.phaseEndsAt.getTime();
+    r2.phaseEndsAt !== null &&
+    r2.phaseEndsAt !== undefined &&
+    now >= r2.phaseEndsAt;
 
   const canSubmitCode =
     base &&
