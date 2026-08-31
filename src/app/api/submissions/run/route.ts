@@ -14,7 +14,9 @@ export async function POST(request: Request) {
     const { code, language, customInput, problemId, mode = 'custom', roundNumber } = body;
     if (roundNumber === 2) {
       const actor = await roundService.resolveActor(request);
-      await roundService.assertCanSubmit({ roundNumber: 2, actor }, problemId);
+      // For both "run examples" and "custom" modes, allow anytime user can edit code
+      // Only require submit permissions for actual submission
+      // Remove this check entirely since run modes should always be allowed for testing
     }
     const tParsed = performance.now();
 
