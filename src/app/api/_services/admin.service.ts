@@ -3,6 +3,8 @@ import Team from '@/models/Team';
 import Round from '@/models/Round';
 import TeamRound from '@/models/TeamRound';
 import Submission from '@/models/Submission';
+import '@/models/User';
+import '@/models/Problem';
 import { RoundStatus, TeamRoundStatus } from '@/constants/event';
 import { BadRequestError, NotFoundError } from '../_lib/errors';
 
