@@ -111,6 +111,16 @@ function AdminContent() {
     }
   };
 
+  const handleRestartRound = async (roundNumber: number) => {
+    try {
+      const res = await adminService.restartRound(roundNumber);
+      if (res.error) alert(res.error);
+      await fetchAdminData(false);
+    } catch (err) {
+      console.error('Error restarting round:', err);
+    }
+  };
+
   const handleAdjustTime = async (roundNumber: number, durationSeconds: number) => {
     try {
       const res = await adminService.overrideRoundDuration(roundNumber, durationSeconds);
@@ -195,6 +205,7 @@ function AdminContent() {
           onPauseRound={handlePauseRound}
           onResumeRound={handleResumeRound}
           onCompleteRound={handleCompleteRound}
+          onRestartRound={handleRestartRound}
         />
 
         {/* Timer status if a round is active */}

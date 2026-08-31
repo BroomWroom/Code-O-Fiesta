@@ -211,7 +211,25 @@ export async function resumeRoundGlobally(roundNumber: number) {
   return round;
 }
 
+export async function restartRoundGlobally(roundNumber: number) {
+  await connectDB();
+  const round = await Round.findOne({ roundNumber });
+  if (!round) throw new NotFoundError('Round not found');
+
+  // Reset all TeamRounds for this round
+  await TeamRound.deleteMany({ roundId: round._id });
+
+  // Reset round back to UPCOMING then immediately start it
+  round.status = RoundStatus.UPCOMING;
+  round.pausedAt = null;
+  await round.save();
+
+  // Re-use existing start logic
+  return startRoundGlobally(roundNumber);
+}
+
 export async function completeRoundGlobally(roundNumber: number) {
+
   await connectDB();
 
   const round = await Round.findOne({ roundNumber });

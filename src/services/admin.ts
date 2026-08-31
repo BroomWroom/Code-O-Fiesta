@@ -507,6 +507,7 @@ export const adminService = {
   completeRound: async (
     roundNumber: number,
   ): Promise<any> => {
+
     try {
       const round = await apiCall(
         `/api/admin/rounds/${roundNumber}/complete`,
@@ -525,6 +526,31 @@ export const adminService = {
           err instanceof Error
             ? err.message
             : 'Failed to complete round',
+      };
+    }
+  },
+
+  restartRound: async (
+    roundNumber: number,
+  ): Promise<any> => {
+    try {
+      const round = await apiCall(
+        `/api/admin/rounds/${roundNumber}/restart`,
+        {
+          method: 'POST',
+        },
+      );
+
+      return {
+        success: true,
+        round,
+      };
+    } catch (err) {
+      return {
+        error:
+          err instanceof Error
+            ? err.message
+            : 'Failed to restart round',
       };
     }
   },
