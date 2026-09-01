@@ -570,8 +570,7 @@ async function getState(
     !(
       phase === Round2Phase.MEMBER_2 &&
       q?.member2Submitted
-    ) &&
-    phaseTimerExpired; // Allow submission only when phase timer has expired
+    );
 
   return {
     roundNumber: input.roundNumber,
