@@ -7,8 +7,8 @@ import CursorTrail from '@/components/common/CursorTrail';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('team@test.com');
-  const [password, setPassword] = useState('TestPassword123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [teamMember, setTeamMember] = useState('MEMBER_1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,19 +76,6 @@ export default function LoginPage() {
               </span>
             </div>
 
-            <div className="p-4 mb-6 rounded bg-[var(--surface-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
-              <p className="font-mono font-semibold text-purple-400 mb-1">Demo Credentials</p>
-              <p>
-                Email: <strong className="text-white">team@test.com</strong>
-              </p>
-              <p>
-                Password: <strong className="text-white">TestPassword123</strong>
-              </p>
-              <p className="mt-2 text-[11px]">
-                Select Member 1 or Member 2 as Team Member
-              </p>
-            </div>
-
             {error && (
               <div
                 role="alert"
@@ -115,7 +102,7 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. team@test.com"
+                  placeholder="you@example.com"
                     required
                   disabled={loading}
                   className="w-full px-3 py-2 bg-[var(--surface-secondary)] border border-[var(--border)] rounded text-xs text-white focus:outline-none focus:ring-2 focus:ring-[var(--focus)] disabled:opacity-50"
